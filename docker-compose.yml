@@ -1,0 +1,100 @@
+version: '3.7'
+
+services:
+
+  ce_traefik:
+    image: "traefik:v2.2"
+    container_name: "ce_traefik"
+    restart: unless-stopped
+    command:
+        - "--providers.docker=true"
+        - "--providers.docker.exposedbydefault=true"
+        - "--api.insecure=true"
+        - "--entrypoints.web.address=:80"
+        - "--entrypoints.web-secure.address=:443"
+        - "--entrypoints.web.forwardedheaders.insecure"
+        - "--entrypoints.web.proxyprotocol.insecure"
+        - "--certificatesresolvers.letsencrypt.acme.email=admin@whiteaster.com"
+        - "--certificatesresolvers.letsencrypt.acme.storage=/acme.json"
+        - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+    labels:
+        - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+        - "traefik.http.routers.http-catchall.entrypoints=web"
+        - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    ports:
+        - 80:80
+        - 443:443
+    volumes: 
+        - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks: 
+        - ce_network
+
+  ce_db:
+    container_name: "ce_db"
+    image: "postgres:12-alpine"
+    restart: unless-stopped
+    volumes:
+      - ce_db:/var/lib/postgresql
+    environment:
+      - POSTGRES_USER=ce_user
+      - POSTGRES_PASSWORD=ce_password
+      - POSTGRES_DB=collection_editor
+    networks:
+      - ce_network
+
+  ce_mongo:
+    container_name: "ce_mongo"
+    image: "mongo:4.2"
+    restart: unless-stopped
+    volumes:
+      - init_db:/docker-entrypoint-initdb.d
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=collection_editor
+      - MONGO_INITDB_ROOT_USERNAME=ce_user
+      - MONGO_INITDB_ROOT_PASSWORD=ce_password
+    networks:
+      - ce_network
+
+  ce_backend: &ce_backend
+    container_name: "ce_backend"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - READ_DOR_ENV=true
+    env_file:
+      - .env
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ce_backend.rule=Host(`${URL}`)
+      - traefik.http.services.ce_backend.loadbalancer.server.port=8000
+      - traefik.http.routers.ce_backend.entrypoints=web-secure
+      - traefik.http.middlewares.ce_backend.headers.accesscontrolallowmethods=GET,OPTIONS,PUT,POST,DELETE,PATCH
+      - traefik.http.middlewares.ce_backend.headers.accesscontrolalloworigin=origin-list-or-null
+      - traefik.http.middlewares.ce_backend.headers.accesscontrolmaxage=100
+      - traefik.http.middlewares.ce_backend.headers.addvaryheader=true
+      - traefik.http.routers.ce_backend.tls=true
+      - traefik.http.routers.ce_backend.tls.certresolver=letsencrypt
+    networks:
+      - ce_network
+
+#  ce_celery:
+#    <<: *ce_backend
+#    image: "ce_celery"
+#    container_name: "ce_celery"
+#    labels: []
+#    command: 'bash -c "/app/docker/entrypoint-celery.sh"'
+
+# volumes definiton
+volumes:
+  init_db:
+  ce_db:
+  mongo_data:
+    
+# network definition
+networks:
+  ce_network:
+    driver: bridge

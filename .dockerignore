@@ -1,0 +1,8 @@
+.git*
+.coveragerc
+.dockerignore
+Dockerfile
+docker-compose.yml
+.vscode
+mypy.ini
+venv

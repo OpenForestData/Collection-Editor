@@ -1,0 +1,37 @@
+image: python:3.8-alpine
+
+stages:
+    - code checks
+    - build
+
+Flake8:
+  stage: code checks
+  script:
+    - pip install flake8
+    - flake8 adapters/ core/ harvester/
+
+Build docker dev image:
+    image: 
+        name: gcr.io/kaniko-project/executor:debug
+        entrypoint: [""]
+    before_script:
+        - echo "pass"
+    stage: build
+    script:
+        - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"gitlab-ci-token\",\"password\":\"$CI_JOB_TOKEN\"}}}" > /kaniko/.docker/config.json
+        - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH --destination $CI_REGISTRY_IMAGE:development
+    only:
+        - development
+
+Build docker master image:
+    image: 
+        name: gcr.io/kaniko-project/executor:debug
+        entrypoint: [""]
+    before_script:
+        - echo "pass"
+    stage: build
+    script:
+        - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"gitlab-ci-token\",\"password\":\"$CI_JOB_TOKEN\"}}}" > /kaniko/.docker/config.json
+        - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --destination $CI_REGISTRY_IMAGE:latest
+    only:
+        - master

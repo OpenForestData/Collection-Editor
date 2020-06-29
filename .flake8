@@ -1,0 +1,11 @@
+[flake8]
+count = True
+max-line-length = 130
+exclude =
+    tests
+    .git
+    migrations
+    settings
+    manage.py
+    __init__.py
+    venv
