@@ -63,8 +63,6 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    environment:
-      - READ_DOR_ENV=true
     env_file:
       - .env
     labels:
@@ -80,13 +78,6 @@ services:
       - traefik.http.routers.ce_backend.tls.certresolver=letsencrypt
     networks:
       - ce_network
-
-#  ce_celery:
-#    <<: *ce_backend
-#    image: "ce_celery"
-#    container_name: "ce_celery"
-#    labels: []
-#    command: 'bash -c "/app/docker/entrypoint-celery.sh"'
 
 # volumes definiton
 volumes:
