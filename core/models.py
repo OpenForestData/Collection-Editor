@@ -11,12 +11,25 @@ from pymongo.cursor import Cursor
 
 
 class DatatableClient(ABC):
+    """
+    Interface for Datable Client.
+    """
     @abstractmethod
-    def get_rows_cursor(self, query: dict = None) -> Cursor:
+    def get_rows(self, query: dict = None):
+        """
+        Return rows of datatable
+        :param query: query to be executed on database
+        :return:
+        """
         pass
 
     @abstractmethod
     def add_row(self, data: dict):
+        """
+
+        :param data:
+        :return:
+        """
         pass
 
     @abstractmethod
@@ -33,7 +46,6 @@ class DatatableClient(ABC):
 
 
 class DatatableMongoClient(DatatableClient):
-
     def __init__(self, collection_name: str):
         self.db = MongoClient(
             host=settings.MONGO_HOST,
@@ -44,7 +56,7 @@ class DatatableMongoClient(DatatableClient):
         )[settings.MONGO_DATABASE]
         self.collection = self.db[collection_name]
 
-    def get_rows_cursor(self, query: dict = None) -> Cursor:
+    def get_rows(self, query: dict = None) -> Cursor:
         return self.collection.find(query if query else {})
 
     def add_row(self, data: dict):

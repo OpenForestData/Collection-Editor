@@ -1,5 +1,4 @@
-from rest_framework import viewsets, mixins, status
-from rest_framework.decorators import action
+from rest_framework import viewsets, mixins
 from rest_framework.response import Response
 
 from core.mixins import MultiSerializerMixin
@@ -21,7 +20,7 @@ class DatatableViewSet(MultiSerializerMixin,
     def retrieve(self, request, pk=None, **kwargs):
         pagination_class = MongoCursorLimitOffsetPagination()
         instance = self.get_object()
-        mongo_cursor = instance.client.get_rows_cursor()
+        mongo_cursor = instance.client.get_rows()
 
         page = pagination_class.paginate_queryset(mongo_cursor, request)
         if page is not None:
