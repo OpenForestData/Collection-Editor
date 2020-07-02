@@ -63,6 +63,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    volumes:
+      - ./:/app/
     env_file:
       - .env
     labels:

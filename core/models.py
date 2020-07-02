@@ -4,7 +4,9 @@ from io import StringIO
 
 import pandas as pd
 from django.conf import settings
-from django.db import models
+from django.contrib.postgres.fields import JSONField, ArrayField
+from django.core.cache import cache
+from django.db import models, transaction
 from django.utils.text import slugify
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
@@ -14,6 +16,7 @@ class DatatableClient(ABC):
     """
     Interface for Datable Client.
     """
+
     @abstractmethod
     def get_rows(self, query: dict = None):
         """
@@ -73,6 +76,8 @@ class DatatableMongoClient(DatatableClient):
         if in_memory_file:
             self.collection.remove()
         for chunk in pd.read_csv(in_memory_file, chunksize=2048):
+            if not hasattr(self, 'columns'):
+                self.columns = list(chunk.columns)
             payload = json.loads(chunk.to_json(orient='records'))
             self.collection.insert(payload)
 
@@ -80,6 +85,7 @@ class DatatableMongoClient(DatatableClient):
 class Datatable(models.Model):
     title = models.CharField(max_length=255)
     collection_name = models.CharField(max_length=255, unique=True, blank=True)
+    columns = ArrayField(models.CharField(max_length=255, blank=True), blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.collection_name:
@@ -93,6 +99,12 @@ class Datatable(models.Model):
         instance = super().from_db(db, field_names, values)
         instance.__set_database_client()
         return instance
+
+    def upload_datatable_file(self, file):
+        with transaction.atomic():
+            self.client.upload_file_to_db(file)
+            self.columns = self.client.columns
+            self.save()
 
     def __set_database_client(self, client=DatatableMongoClient):
         self.client = client(self.collection_name)

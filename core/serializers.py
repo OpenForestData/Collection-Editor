@@ -12,8 +12,8 @@ from core.models import Datatable
 class DatatableReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Datatable
-        fields = '__all__'
-        read_only_fields = [fields]
+        fields = ['id', 'title', 'collection_name']
+        read_only_fields = fields
 
 
 class DatatableSerializer(serializers.ModelSerializer):
@@ -32,7 +32,7 @@ class DatatableSerializer(serializers.ModelSerializer):
         file = validated_data.pop('file')
         with transaction.atomic():
             result = super().create(validated_data)
-            result.client.upload_file_to_db(file)
+            result.upload_datatable_file(file)
         return result
 
 
@@ -53,3 +53,6 @@ class DatatableRowsSerializer(serializers.Serializer):
             ret[key] = str(val)
 
         return ret
+
+    # def _writable_fields(self):
+    #     pass
