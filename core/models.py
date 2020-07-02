@@ -4,8 +4,7 @@ from io import StringIO
 
 import pandas as pd
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField, ArrayField
-from django.core.cache import cache
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.utils.text import slugify
 from pymongo import MongoClient
