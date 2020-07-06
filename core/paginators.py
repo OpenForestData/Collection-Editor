@@ -3,9 +3,12 @@ from rest_framework.pagination import LimitOffsetPagination
 
 
 class MongoCursorLimitOffsetPagination(LimitOffsetPagination):
+    """
+    Paginator for MongoDB Cursor build on DRF pagination
+    """
     max_limit = 1000
 
-    def paginate_queryset(self, cursor, request, view=None):
+    def paginate_queryset(self, cursor: Cursor, request, view=None):
         self.count = self.get_count(cursor)
         self.limit = self.get_limit(request)
         if self.limit is None:

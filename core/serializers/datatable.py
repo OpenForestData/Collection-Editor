@@ -1,15 +1,12 @@
-from collections import OrderedDict
-
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 from rest_framework import serializers
-from rest_framework.fields import SkipField
 
 from core.models import Datatable
 
 
-class DatatableReadSerializer(serializers.ModelSerializer):
+class DatatableReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = Datatable
         fields = ['id', 'title', 'collection_name']
@@ -21,7 +18,7 @@ class DatatableSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Datatable
-        fields = '__all__'
+        exclude = ['columns']
 
     def validate_file(self, file: InMemoryUploadedFile):
         if file.content_type not in settings.SUPPORTED_MIME_TYPES:
@@ -34,25 +31,3 @@ class DatatableSerializer(serializers.ModelSerializer):
             result = super().create(validated_data)
             result.upload_datatable_file(file)
         return result
-
-
-class DatatableRowsSerializer(serializers.Serializer):
-
-    def to_representation(self, instance):
-        ret = OrderedDict()
-        fields = self._readable_fields
-
-        for field in fields:
-            try:
-                attribute = field.get_attribute(instance)
-            except SkipField:
-                continue
-            ret[field.field_name] = field.to_representation(attribute)
-
-        for key, val in instance.items():
-            ret[key] = str(val)
-
-        return ret
-
-    # def _writable_fields(self):
-    #     pass

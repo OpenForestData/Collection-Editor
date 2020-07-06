@@ -7,5 +7,5 @@ from core.urls import urlpatterns as datatable_urls
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    url(r'^datatable', include(datatable_urls)),
+    url(r'^datatable/', include(datatable_urls)),
 ]

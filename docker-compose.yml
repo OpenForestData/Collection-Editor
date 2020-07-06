@@ -40,6 +40,8 @@ services:
       - POSTGRES_USER=ce_user
       - POSTGRES_PASSWORD=ce_password
       - POSTGRES_DB=collection_editor
+    ports:
+      - 5432:5432
     networks:
       - ce_network
 
@@ -54,6 +56,8 @@ services:
       - MONGO_INITDB_DATABASE=collection_editor
       - MONGO_INITDB_ROOT_USERNAME=ce_user
       - MONGO_INITDB_ROOT_PASSWORD=ce_password
+    ports:
+      - 27017:27017
     networks:
       - ce_network
 
