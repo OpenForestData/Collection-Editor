@@ -40,6 +40,8 @@ services:
       - POSTGRES_USER=ce_user
       - POSTGRES_PASSWORD=ce_password
       - POSTGRES_DB=collection_editor
+    ports:
+      - 5432:5432
     networks:
       - ce_network
 
@@ -54,6 +56,8 @@ services:
       - MONGO_INITDB_DATABASE=collection_editor
       - MONGO_INITDB_ROOT_USERNAME=ce_user
       - MONGO_INITDB_ROOT_PASSWORD=ce_password
+    ports:
+      - 27017:27017
     networks:
       - ce_network
 
@@ -63,8 +67,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    environment:
-      - READ_DOR_ENV=true
+    volumes:
+      - ./:/app/
     env_file:
       - .env
     labels:
@@ -80,13 +84,6 @@ services:
       - traefik.http.routers.ce_backend.tls.certresolver=letsencrypt
     networks:
       - ce_network
-
-#  ce_celery:
-#    <<: *ce_backend
-#    image: "ce_celery"
-#    container_name: "ce_celery"
-#    labels: []
-#    command: 'bash -c "/app/docker/entrypoint-celery.sh"'
 
 # volumes definiton
 volumes:
