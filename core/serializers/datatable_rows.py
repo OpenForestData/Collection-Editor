@@ -12,6 +12,7 @@ from core.models import DatatableActionType
 class DatatableRowsReadOnlySerializer(serializers.Serializer):
 
     def to_representation(self, instance):
+
         ret = OrderedDict()
         fields = self._readable_fields
 
@@ -34,7 +35,8 @@ class DatatableRowsSerializer(serializers.Serializer):
         result = super().is_valid()
         if not self._validated_data:
             raise serializers.ValidationError(
-                f'To create or patch a row at least one column has to be specified.')
+                'To create or patch a row at least one column has to be specified.'
+            )
         return result
 
     @property

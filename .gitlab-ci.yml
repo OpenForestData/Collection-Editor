@@ -8,7 +8,7 @@ Flake8:
   stage: code checks
   script:
     - pip install flake8
-    - flake8 adapters/ core/ collection_editor/
+    - flake8 core/ collection_editor/
 
 Build docker dev image:
     image: 
