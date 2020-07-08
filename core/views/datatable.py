@@ -1,10 +1,9 @@
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from core.filters import RowOrdering, RowFiltering
-from core.mixins import MultiSerializerMixin, MultiFilterMixin
+from core.filters import RowOrdering
+from core.mixins import MultiSerializerMixin
 from core.models import Datatable
 from core.paginators import MongoCursorLimitOffsetPagination
 from core.serializers import DatatableSerializer, DatatableReadOnlySerializer, DatatableRowsReadOnlySerializer, \
@@ -93,4 +92,3 @@ class DatatableViewSet(MultiSerializerMixin,
         serializer.delete_row(row_id)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
