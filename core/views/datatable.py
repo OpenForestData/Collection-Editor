@@ -1,8 +1,10 @@
-from rest_framework import viewsets, mixins, status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from core.mixins import MultiSerializerMixin
+from core.filters import RowOrdering, RowFiltering
+from core.mixins import MultiSerializerMixin, MultiFilterMixin
 from core.models import Datatable
 from core.paginators import MongoCursorLimitOffsetPagination
 from core.serializers import DatatableSerializer, DatatableReadOnlySerializer, DatatableRowsReadOnlySerializer, \
@@ -29,6 +31,9 @@ class DatatableViewSet(MultiSerializerMixin,
         pagination_class = MongoCursorLimitOffsetPagination()
         instance = self.get_object()
         mongo_cursor = instance.client.get_rows()
+
+        ordering_filter = RowOrdering(instance.columns)
+        mongo_cursor = ordering_filter.order_cursor(request, mongo_cursor)
 
         page = pagination_class.paginate_queryset(mongo_cursor, request)
         if page is not None:
@@ -88,3 +93,4 @@ class DatatableViewSet(MultiSerializerMixin,
         serializer.delete_row(row_id)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
