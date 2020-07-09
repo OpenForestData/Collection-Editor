@@ -9,7 +9,11 @@ ENV PYTHONUNBUFFERED 1
 RUN apt-get update \
     && apt-get install -y \
     git \
-    curl
+    curl \
+    ibsasl2-dev \
+    python3-dev \
+    libldap2-dev \
+    libssl-dev
 
 COPY ./requirements.txt /app
 RUN  pip install -r requirements.txt
