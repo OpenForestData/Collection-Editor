@@ -10,10 +10,9 @@ RUN apt-get update \
     && apt-get install -y \
     git \
     curl \
-    ibsasl2-dev \
-    python3-dev \
-    libldap2-dev \
-    libssl-dev
+    # OpenLDAP
+    gcc build-essential\
+    libsasl2-dev python3-dev libldap2-dev libssl-dev ldap-utils
 
 COPY ./requirements.txt /app
 RUN  pip install -r requirements.txt

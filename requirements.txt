@@ -7,3 +7,6 @@ pymongo~=3.10.1
 pandas~=1.0.5
 psycopg2-binary==2.8.5
 xlrd==1.2.0
+
+python-ldap==3.3.1
+django-auth-ldap==2.2.0

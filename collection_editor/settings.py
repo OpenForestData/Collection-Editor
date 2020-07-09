@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 
+import ldap
+from django_auth_ldap.config import LDAPSearch
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -97,6 +100,13 @@ DATABASES = {
     },
 }
 
+# Authentication backends
+
+AUTHENTICATION_BACKENDS = [
+    "django_auth_ldap.backend.LDAPBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
@@ -114,6 +124,29 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# LDAP
+
+AUTH_LDAP_SERVER_URI = os.environ.get("LDAP_HOST")
+AUTH_LDAP_BIND_DN = os.environ.get("LDAP_USERNAME")
+AUTH_LDAP_BIND_PASSWORD = os.environ.get("LDAP_PASSWORD")
+AUTH_LDAP_USER_SEARCH = LDAPSearch(
+    os.environ.get("LDAP_SEARCH_HOST"),
+    ldap.SCOPE_SUBTREE,
+    '({}=%(user)s)'.format(os.environ.get("LDAP_FORMAT")),
+)
+
+AUTH_LDAP_USER_ATTR_MAP = {
+    'first_name': 'givenName',
+    'last_name': 'sn',
+    'email': 'mail',
+}
+# Use LDAP group membership to calculate group permissions.
+AUTH_LDAP_FIND_GROUP_PERMS = False
+
+# Cache distinguised names and group memberships for an hour to minimize
+# LDAP traffic.
+AUTH_LDAP_CACHE_TIMEOUT = 3600
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
