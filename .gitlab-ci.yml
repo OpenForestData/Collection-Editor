@@ -1,7 +1,7 @@
 image: python:3.8-alpine
 
 before_script:
-    - apk add --no-cache git python3-dev gcc musl-dev postgresql-dev build-base
+    - apk add --no-cache git python3-dev gcc musl-dev postgresql-dev build-base openldap-dev
     - pip install -U pip
     - pip install --ignore-installed -r requirements.txt
 
