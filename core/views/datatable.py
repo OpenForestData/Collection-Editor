@@ -7,7 +7,7 @@ from core.mixins import MultiSerializerMixin
 from core.models import Datatable
 from core.paginators import MongoCursorLimitOffsetPagination
 from core.serializers import DatatableSerializer, DatatableReadOnlySerializer, DatatableRowsReadOnlySerializer, \
-    DatatableRowsSerializer
+    DatatableRowsSerializer, DatatableExportSerializer
 
 
 class DatatableViewSet(MultiSerializerMixin,
@@ -19,7 +19,8 @@ class DatatableViewSet(MultiSerializerMixin,
         'retrieve': DatatableRowsReadOnlySerializer,
         'add_row': DatatableRowsSerializer,
         'patch_row': DatatableRowsSerializer,
-        'delete_row': DatatableRowsSerializer
+        'delete_row': DatatableRowsSerializer,
+        'export': DatatableExportSerializer,
     }
     queryset = Datatable.objects.all()
 
@@ -94,3 +95,20 @@ class DatatableViewSet(MultiSerializerMixin,
         serializer.delete_row(row_id)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['POST'])
+    def export(self, request, pk=None, **kwargs):
+        instance = self.get_object()
+
+        row_filter = RowFiltering(instance.columns)
+        mongo_cursor = row_filter.filter_cursor(request, instance.client)
+
+        ordering_filter = RowOrdering(instance.columns)
+        mongo_cursor = ordering_filter.order_cursor(request, mongo_cursor)
+
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        export_result = serializer.export(mongo_cursor)
+        return Response(export_result,
+                        status=status.HTTP_200_OK if export_result['status'] == 'OK'
+                        else status.HTTP_400_BAD_REQUEST)
