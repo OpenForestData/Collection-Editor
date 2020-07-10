@@ -2,7 +2,7 @@ from rest_framework import status, mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from core.filters import RowOrdering
+from core.filters import RowOrdering, RowFiltering
 from core.mixins import MultiSerializerMixin
 from core.models import Datatable
 from core.paginators import MongoCursorLimitOffsetPagination
@@ -29,7 +29,12 @@ class DatatableViewSet(MultiSerializerMixin,
         """
         pagination_class = MongoCursorLimitOffsetPagination()
         instance = self.get_object()
-        mongo_cursor = instance.client.get_rows()
+
+        row_filter = RowFiltering(instance.columns)
+        mongo_cursor = row_filter.filter_cursor(request, instance.client)
+
+        ordering_filter = RowOrdering(instance.columns)
+        mongo_cursor = ordering_filter.order_cursor(request, mongo_cursor)
 
         ordering_filter = RowOrdering(instance.columns)
         mongo_cursor = ordering_filter.order_cursor(request, mongo_cursor)

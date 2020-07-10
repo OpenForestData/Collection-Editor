@@ -9,7 +9,10 @@ ENV PYTHONUNBUFFERED 1
 RUN apt-get update \
     && apt-get install -y \
     git \
-    curl
+    curl \
+    # OpenLDAP
+    gcc build-essential\
+    libsasl2-dev python3-dev libldap2-dev libssl-dev ldap-utils
 
 COPY ./requirements.txt /app
 RUN  pip install -r requirements.txt

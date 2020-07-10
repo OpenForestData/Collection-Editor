@@ -1,3 +1,4 @@
+import datetime
 import json
 from abc import ABC, abstractmethod
 from io import StringIO, BytesIO
@@ -5,7 +6,7 @@ from io import StringIO, BytesIO
 import pandas as pd
 from bson import ObjectId
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
 from django.utils.text import slugify
 from pymongo import MongoClient
@@ -52,7 +53,7 @@ class DatatableMongoClient(DatatableClient):
             connect=True
         )[settings.MONGO_DATABASE]
         self.collection: Collection = self.db[collection_name]
-        self.columns = []
+        self.columns = {}
 
     def get_rows(self, query: dict = None) -> Cursor:
         """
@@ -122,19 +123,34 @@ class DatatableMongoClient(DatatableClient):
             # CSV can be loaded in chunks
             chunk = None
             for chunk in pd.read_csv(in_memory_file, chunksize=2048):
-                payload = json.loads(chunk.to_json(orient='records'))
+                payload = json.loads(chunk.to_json(orient='records', date_format='iso'))
                 self.collection.insert_many(payload)
-            self.columns = list(chunk.columns)
+            self.columns = self.__get_column_types(chunk)
         else:  # file_type == 'excel'
             loaded_file = pd.read_excel(in_memory_file)
-            self.collection.insert_many(json.loads(loaded_file.to_json(orient='records')))
-            self.columns = list(loaded_file.columns)
+            self.collection.insert_many(json.loads(loaded_file.to_json(orient='records', date_format='iso')))
+            self.columns = self.__get_column_types(loaded_file)
+
+    def __get_column_types(self, table: pd.DataFrame):
+        column_types = {}
+        for column in table.columns:
+            cell_value = table.iloc[0][column]
+            try:
+                column_types[column] = type(cell_value.item())
+            except AttributeError:
+                # cell value is not of a numpy dtype
+                # serializing supports only native values
+                if not type(cell_value) in [str, int, float, complex, bool]:
+                    column_types[column] = str
+                else:
+                    column_types[column] = type(cell_value)
+        return column_types
 
 
 class Datatable(models.Model):
     title = models.CharField(max_length=255)
     collection_name = models.CharField(max_length=255, unique=True, blank=True)
-    columns = ArrayField(models.CharField(max_length=255, blank=True), blank=True, null=True)
+    columns = JSONField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         """
@@ -144,6 +160,7 @@ class Datatable(models.Model):
         if not self.collection_name:
             self.collection_name = slugify(self.title)
         self.__set_database_client()
+        self.__serialize_type()
         return super().save(*args, **kwargs)
 
     @classmethod
@@ -152,8 +169,9 @@ class Datatable(models.Model):
         Overrides parent function to attach NoSQL client at load from DB
         :return:
         """
-        instance = super().from_db(db, field_names, values)
+        instance: Datatable = super().from_db(db, field_names, values)
         instance.__set_database_client()
+        instance.__deserialize_type()
         return instance
 
     def upload_datatable_file(self, file):
@@ -185,3 +203,12 @@ class Datatable(models.Model):
 
     def __repr__(self):
         return str(self)
+
+    def __serialize_type(self):
+        if self.columns:
+            for column, col_type in self.columns.items():
+                self.columns[column] = str(col_type.__name__)
+
+    def __deserialize_type(self):
+        for column, col_type in self.columns.items():
+            self.columns[column] = eval(col_type)
