@@ -1,4 +1,4 @@
-from rest_framework import viewsets, mixins, status
+from rest_framework import status, mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -32,6 +32,9 @@ class DatatableViewSet(MultiSerializerMixin,
 
         row_filter = RowFiltering(instance.columns)
         mongo_cursor = row_filter.filter_cursor(request, instance.client)
+
+        ordering_filter = RowOrdering(instance.columns)
+        mongo_cursor = ordering_filter.order_cursor(request, mongo_cursor)
 
         ordering_filter = RowOrdering(instance.columns)
         mongo_cursor = ordering_filter.order_cursor(request, mongo_cursor)
