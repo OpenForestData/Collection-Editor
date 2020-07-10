@@ -74,7 +74,6 @@ class RowFiltering(MongoFilter):
         logical_param: str = request.query_params.get(self.logical_param)
         if logical_param:
             return self.__build_logical_queries(logical_param)
-        return
 
     def __build_logical_queries(self, query_param: str) -> dict:
         """

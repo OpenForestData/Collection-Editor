@@ -10,3 +10,5 @@ xlrd==1.2.0
 
 python-ldap==3.3.1
 django-auth-ldap==2.2.0
+
+pyDatavers@git+https://gitlab.whiteaster.com/public_data/pydataverse-upgrade.git  #egg=pyDatavers
