@@ -1,6 +1,6 @@
-class WrongAction(BaseException):
+class WrongAction(Exception):
     pass
 
 
-class WrongFileType(BaseException):
+class WrongFileType(Exception):
     pass
