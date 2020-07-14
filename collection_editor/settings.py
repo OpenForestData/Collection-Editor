@@ -48,13 +48,21 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'rest_framework',
     'django_filters',
+    'dry_rest_permissions',
 ]
 
 LOCAL_APPS = [
     'core.apps.CoreConfig',
 ]
 
+TESTING_APPS = [
+    'django_nose',
+]
+
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+if os.environ.get('TESTING', False):
+    INSTALLED_APPS += TESTING_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -169,6 +177,8 @@ STATIC_URL = '/static/'
 # Application specific settings
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication',
+                                       'rest_framework.authentication.BasicAuthentication',],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100
@@ -194,4 +204,15 @@ DATAVERSE_URL = os.environ.get('DATAVERSE_URL', '')
 DATAVERSE_ACCESS_TOKEN = os.environ.get('DATAVERSE_ACCESS_TOKEN')
 
 # Media
+
 TMP_MEDIA_PATH = os.path.join(BASE_DIR, 'media', 'tmp')
+
+# Tests
+
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+
+# Permissions groups
+# !!! IMPORTANT !!!
+# If this values are changed, change initial_groups fixture to match them
+READONLY_GROUP_NAME = 'ReadOnly'
+READWRITE_GROUP_NAME = 'ReadWrite'

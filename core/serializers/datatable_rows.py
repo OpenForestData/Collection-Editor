@@ -6,10 +6,14 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.fields import SkipField
 
-from core.models import DatatableActionType
+from core.models import DatatableActionType, Datatable
 
 
 class DatatableRowsReadOnlySerializer(serializers.Serializer):
+
+    # Add Meta class for permissions
+    class Meta:
+        model = Datatable
 
     def to_representation(self, instance):
 
@@ -30,6 +34,10 @@ class DatatableRowsReadOnlySerializer(serializers.Serializer):
 
 
 class DatatableRowsSerializer(serializers.Serializer):
+
+    # Add Meta class for permissions
+    class Meta:
+        model = Datatable
 
     def is_valid(self, raise_exception=False):
         result = super().is_valid()

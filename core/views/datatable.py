@@ -1,3 +1,4 @@
+from dry_rest_permissions.generics import DRYPermissions
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,6 +14,7 @@ from core.serializers import DatatableSerializer, DatatableReadOnlySerializer, D
 class DatatableViewSet(MultiSerializerMixin,
                        mixins.CreateModelMixin,
                        viewsets.ReadOnlyModelViewSet):
+    permission_classes = (DRYPermissions,)
     serializers = {
         'default': DatatableReadOnlySerializer,
         'create': DatatableSerializer,

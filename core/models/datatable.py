@@ -5,6 +5,7 @@ from io import StringIO, BytesIO
 import pandas as pd
 from bson import ObjectId
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
 from django.utils.text import slugify
@@ -211,3 +212,20 @@ class Datatable(models.Model):
     def __deserialize_type(self):
         for column, col_type in self.columns.items():
             self.columns[column] = eval(col_type)
+
+    # DRY Permissions
+
+    @staticmethod
+    def has_read_permission(request):
+        return request.user.is_superuser or request.user.groups.filter(name__in=[settings.READONLY_GROUP_NAME,
+                                                                                 settings.READWRITE_GROUP_NAME])
+
+    def has_object_read_permission(self, request):
+        return self.has_read_permission(request)
+
+    @staticmethod
+    def has_write_permission(request):
+        return request.user.is_superuser or request.user.groups.filter(name=settings.READWRITE_GROUP_NAME)
+
+    def has_object_write_permission(self, request):
+        return self.has_write_permission(request)
