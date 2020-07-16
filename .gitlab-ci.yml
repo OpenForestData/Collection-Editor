@@ -14,16 +14,58 @@ variables:
   MONGO_PASSWORD: ce_password
   MONGO_PORT: 27017
 
+before_script:
+    - apk add --no-cache git python3-dev gcc musl-dev postgresql-dev build-base openldap-dev
+    - pip install -U pip
+    - pip install --ignore-installed -r requirements.txt
+
 stages:
+  - sonarqube
   - code checks
   - tests
   - build
 
+sonarqube:
+    image: sonarsource/sonar-scanner-cli
+    stage: sonarqube
+    before_script: []
+    script:
+        - sonar-scanner -Dsonar.projectKey=CollectionEditor -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.whiteaster.com -Dsonar.login=3c1c5d7aec1288650be47427f18a5990e94024eb
+    only:
+        - master
+
 Flake8:
-  stage: code checks
-  script:
-    - pip install flake8
-    - flake8 core/ collection_editor/
+    stage: code checks
+    script:
+        - pip install flake8
+        - flake8 core/ collection_editor/
+
+PyLint:
+    stage: code checks
+    allow_failure: true
+    script:
+        - pip install pylint pylint_django
+        - pylint --rcfile ./.pylintrc collection_editor core
+
+Piprot:
+    stage: code checks
+    allow_failure: true
+    script:
+        - pip install piprot
+        - piprot
+
+PipCheck:
+    stage: code checks
+    allow_failure: true
+    script:
+        - pip check
+
+Safety:
+    stage: code checks
+    allow_failure: true
+    script:
+        - pip install safety
+        - safety check -r requirements.txt
 
 Test:
   stage: tests

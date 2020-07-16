@@ -39,6 +39,9 @@ class DatatableViewSet(MultiSerializerMixin,
         ordering_filter = RowOrdering(instance.columns)
         mongo_cursor = ordering_filter.order_cursor(request, mongo_cursor)
 
+        ordering_filter = RowOrdering(instance.columns)
+        mongo_cursor = ordering_filter.order_cursor(request, mongo_cursor)
+
         page = pagination_class.paginate_queryset(mongo_cursor, request)
 
         serializer = self.get_serializer(page, many=True)
