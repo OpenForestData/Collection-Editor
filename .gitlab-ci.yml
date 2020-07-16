@@ -16,7 +16,7 @@ variables:
 
 before_script:
     - apt-get update 
-    - apt-get install git python3-dev gcc musl-dev postgresql-dev build-base openldap-dev
+    - apt-get install gcc git build-essential libsasl2-dev python3-dev libldap2-dev libssl-dev ldap-utils
     - pip install -U pip
     - pip install --ignore-installed -r requirements.txt
 
@@ -85,7 +85,6 @@ Test:
     - name: mongo:4.2
       alias: ce_mongo
   script:
-    - apt-get update && apt-get install -y gcc git build-essential libsasl2-dev python3-dev libldap2-dev libssl-dev ldap-utils
     - pip install -r requirements.txt
     - pip install -r testing_requirements.txt
     - cp example.env .env
