@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 
 
 def user_default_group(sender, instance, **kwargs):
@@ -12,8 +13,8 @@ def user_default_group(sender, instance, **kwargs):
     from django.contrib.auth.models import Group
 
     if kwargs["created"]:
-        group = Group.objects.get(name='ReadOnly')
-        instance.groups.add(group)
+        group = Group.objects.get_or_create(name=settings.READONLY_GROUP_NAME)
+        instance.groups.add(group[0])
 
 
 class CoreConfig(AppConfig):

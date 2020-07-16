@@ -4,29 +4,17 @@ from copy import deepcopy
 from bson import ObjectId
 from django.db import transaction
 from rest_framework import serializers
-from rest_framework.fields import SkipField
 
 from core.models import DatatableActionType, Datatable
 
 
 class DatatableRowsReadOnlySerializer(serializers.Serializer):
-
     # Add Meta class for permissions
     class Meta:
         model = Datatable
 
     def to_representation(self, instance):
-
         ret = OrderedDict()
-        fields = self._readable_fields
-
-        for field in fields:
-            try:
-                attribute = field.get_attribute(instance)
-            except SkipField:
-                continue
-            ret[field.field_name] = field.to_representation(attribute)
-
         for key, val in instance.items():
             ret[key] = str(val)
 
@@ -34,7 +22,6 @@ class DatatableRowsReadOnlySerializer(serializers.Serializer):
 
 
 class DatatableRowsSerializer(serializers.Serializer):
-
     # Add Meta class for permissions
     class Meta:
         model = Datatable
@@ -43,7 +30,7 @@ class DatatableRowsSerializer(serializers.Serializer):
         result = super().is_valid()
         if not self._validated_data:
             raise serializers.ValidationError(
-                'To create or patch a row at least one column has to be specified.'
+                {'non_field_errors': 'To create or patch a row at least one column has to be specified.'}
             )
         return result
 

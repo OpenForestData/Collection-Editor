@@ -30,7 +30,8 @@ if os.environ.get('READ_DOT_ENV'):
 SECRET_KEY = 'k23q)_j(t#6h&5er=e5w^c#=4f#q4t-gw(=hewkpw_c7p!*%*^'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', False)
+TESTING = os.environ.get('TESTING', False)
 
 ALLOWED_HOSTS = ['*']
 
@@ -61,7 +62,7 @@ TESTING_APPS = [
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-if os.environ.get('TESTING', False):
+if TESTING:
     INSTALLED_APPS += TESTING_APPS
 
 MIDDLEWARE = [
@@ -178,7 +179,7 @@ STATIC_URL = '/static/'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication',
-                                       'rest_framework.authentication.BasicAuthentication',],
+                                       'rest_framework.authentication.BasicAuthentication', ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100
@@ -193,8 +194,10 @@ SUPPORTED_MIME_TYPES = {
 # Mongo DB
 
 MONGO_DATABASE = os.environ.get('MONGO_DATABASE')
+if TESTING:
+    MONGO_DATABASE = 'test' + MONGO_DATABASE
 MONGO_HOST = os.environ.get('MONGO_HOST')
-MONGO_PORT = os.environ.get('MONGO_PORT', 27017)
+MONGO_PORT = int(os.environ.get('MONGO_PORT', 27017))
 MONGO_USER = os.environ.get('MONGO_USER')
 MONGO_PASSWORD = os.environ.get('MONGO_PASSWORD')
 
