@@ -67,6 +67,44 @@ Safety:
         - pip install safety
         - safety check -r requirements.txt
 
+Sphinx documentation development:
+    stage: documentation
+    before_script:
+        - apk add make postgresql-libs gcc musl-dev postgresql-dev python3-dev git
+        - pip install -r requirements.txt
+        - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
+    script:
+        - cd docs/
+        - make html
+    artifacts:
+        paths:
+            - _build/html
+        expire_in: 3 day
+    only:
+        - branches
+    except:
+        - master
+    needs:
+        - Flake8
+
+Sphinx documentation:
+    stage: documentation
+    before_script:
+        - apk add make postgresql-libs gcc musl-dev postgresql-dev python3-dev git
+        - pip install -r requirements.txt
+        - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
+    script:
+        - cd docs/
+        - make html
+    artifacts:
+        paths:
+            - _build/html
+        expire_in: 30 day
+    only:
+        - master
+    needs:
+        - Flake8
+
 Test:
   stage: tests
   variables:
