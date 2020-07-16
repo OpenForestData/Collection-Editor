@@ -73,7 +73,7 @@ Sphinx documentation development:
     stage: documentation
     before_script:
         - apt-get update
-        - apt-get install gcc musl-dev python3-dev git libsasl2-dev python-dev libldap2-dev libssl-dev -y
+        - apt-get install gcc musl-dev python3-dev git build-essential libsasl2-dev python-dev libldap2-dev libssl-dev -y
         - pip install -r requirements.txt
         - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
     script:
