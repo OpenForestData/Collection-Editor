@@ -15,7 +15,8 @@ variables:
   MONGO_PORT: 27017
 
 before_script:
-    - apt install --no-cache git python3-dev gcc musl-dev postgresql-dev build-base openldap-dev
+    - apt-get update 
+    - apt-get install git python3-dev gcc musl-dev postgresql-dev build-base openldap-dev
     - pip install -U pip
     - pip install --ignore-installed -r requirements.txt
 
