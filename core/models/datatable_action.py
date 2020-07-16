@@ -39,20 +39,20 @@ class DatatableAction(models.Model):
         """
         if self.action == DatatableActionType.DELETE.value:
             self.datatable.client.add_row(self.old_row, row_id=self.old_row['_id'])
-            self.set_reverted()
+            self.__set_reverted()
             return
         elif self.action == DatatableActionType.CREATE.value:
             self.datatable.client.delete_row(self.new_row['_id'])
-            self.set_reverted()
+            self.__set_reverted()
             return
         elif self.action == DatatableActionType.UPDATE.value:
             self.datatable.client.patch_row(self.old_row['_id'], self.old_row)
-            self.set_reverted()
+            self.__set_reverted()
             return
 
         raise WrongAction(f'Action {self.action} is not proper action')
 
-    def set_reverted(self):
+    def __set_reverted(self):
         """
         Sets reverted to True and push it to DB
         """

@@ -6,7 +6,6 @@ from pymongo.cursor import Cursor
 from rest_framework.settings import api_settings
 
 from core.models.datatable import DatatableMongoClient
-from core.utils import remove_prefix
 
 
 class MongoFilter(ABC):
@@ -41,7 +40,7 @@ class RowOrdering(MongoFilter):
             fields = [param.strip() for param in params.split(',')]
             ordering = self.remove_invalid_fields(fields)
             if ordering:
-                return [(field, pymongo.DESCENDING) if field.startswith('-') else (field, pymongo.ASCENDING)
+                return [(field[1:], pymongo.DESCENDING) if field.startswith('-') else (field, pymongo.ASCENDING)
                         for field in fields]
 
         # No ordering was included, or all the ordering fields were invalid
@@ -49,22 +48,16 @@ class RowOrdering(MongoFilter):
 
     def order_cursor(self, request, cursor: Cursor):
         ordering = self.get_ordering(request)
-
-        if ordering:
-            return cursor.sort(ordering)
-
-        return cursor
+        return cursor.sort(ordering)
 
 
 class RowFiltering(MongoFilter):
-    ordering_prefix = 'filter_'
     logical_param = 'logical_query'
     supported_logical_operation = ['or', 'and']
 
     def get_filtering(self, request):
-        filtering_params = {remove_prefix(param, self.ordering_prefix): val for param, val in
-                            request.query_params.items() if
-                            param.startswith(self.ordering_prefix)}
+        filtering_params = {param: val for param, val in
+                            request.query_params.items()}
         filtering = None
         if filtering_params:
             filtering = self.validate_fields(filtering_params)
@@ -95,7 +88,7 @@ class RowFiltering(MongoFilter):
                 logical_params = self.__build_logical_queries(param.strip())
                 if logical_params:
                     logical_query[operator].append(logical_params)
-        return logical_query
+        return {operator: query for operator, query in logical_query.items() if query}
 
     def __find_logical_queries(self, string: str) -> dict:
         """
