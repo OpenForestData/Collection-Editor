@@ -15,58 +15,84 @@ variables:
   MONGO_PORT: 27017
 
 before_script:
-    - apt-get update 
-    - apt-get install -y gcc git build-essential libsasl2-dev python3-dev libldap2-dev libssl-dev ldap-utils
-    - pip install -U pip
-    - pip install --ignore-installed -r requirements.txt
+  - apt-get update
+  - apt-get install -y --no-install-recommends gcc git build-essential libsasl2-dev python3-dev libldap2-dev libssl-dev ldap-utils
+  - pip install -U pip
+  - pip install --ignore-installed -r requirements.txt
 
 stages:
-  - sonarqube
   - code checks
+  - documentation
   - tests
+  - sonarqube
   - build
 
-sonarqube:
-    image: sonarsource/sonar-scanner-cli
-    stage: sonarqube
-    before_script: []
-    script:
-        - sonar-scanner -Dsonar.projectKey=CollectionEditor -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.whiteaster.com -Dsonar.login=3c1c5d7aec1288650be47427f18a5990e94024eb
-    only:
-        - master
-
 Flake8:
-    stage: code checks
-    script:
-        - pip install flake8
-        - flake8 core/ collection_editor/
+  stage: code checks
+  before_script:
+    - echo "pass"  
+  script:
+    - pip install flake8
+    - flake8 core/ collection_editor/
 
 PyLint:
-    stage: code checks
-    allow_failure: true
-    script:
-        - pip install pylint pylint_django
-        - pylint --rcfile ./.pylintrc collection_editor core
+  stage: code checks
+  allow_failure: true
+  script:
+    - pip install pylint pylint_django
+    - pylint --rcfile ./.pylintrc collection_editor core
 
 Piprot:
-    stage: code checks
-    allow_failure: true
-    script:
-        - pip install piprot
-        - piprot
+  stage: code checks
+  allow_failure: true
+  script:
+    - pip install piprot
+    - piprot
 
 PipCheck:
-    stage: code checks
-    allow_failure: true
-    script:
-        - pip check
+  stage: code checks
+  allow_failure: true
+  script:
+    - pip check
 
 Safety:
-    stage: code checks
-    allow_failure: true
-    script:
-        - pip install safety
-        - safety check -r requirements.txt
+  stage: code checks
+  allow_failure: true
+  script:
+    - pip install safety
+    - safety check -r requirements.txt
+
+Sphinx documentation development:
+  stage: documentation
+  script:
+    - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
+    - cd docs/
+    - make html
+  artifacts:
+    paths:
+        - _build/html
+    expire_in: 3 day
+  only:
+    - branches
+  except:
+    - master
+  needs:
+    - Flake8
+
+Sphinx documentation:
+  stage: documentation
+  script:
+    - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
+    - cd docs/
+    - make html
+  artifacts:
+    paths:
+      - _build/html
+    expire_in: 30 day
+  only:
+    - master
+  needs:
+    - Flake8
 
 Test:
   stage: tests
@@ -85,13 +111,32 @@ Test:
     - name: mongo:4.2
       alias: ce_mongo
   script:
-    - pip install -r requirements.txt
     - pip install -r testing_requirements.txt
     - cp example.env .env
     - python manage.py migrate
     - coverage run manage.py test
-    - coverage report -o cov.xml
+    - coverage xml -o cov.xml
+    - coverage report -m
   coverage: /^TOTAL.*\s+(\d+\%)$/
+  artifacts:
+    paths:
+        - cov.xml
+    expire_in: 1h
+  needs:
+    - Flake8
+
+sonarqube:
+  image: sonarsource/sonar-scanner-cli
+  stage: sonarqube
+  before_script: []
+  script:
+    - sonar-scanner -Dsonar.projectKey=CollectionEditor -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.whiteaster.com -Dsonar.login=3c1c5d7aec1288650be47427f18a5990e94024eb
+  dependencies: 
+    - Test
+  only:
+    - master
+  needs:
+    - Test
 
 Build docker dev image:
   image:
