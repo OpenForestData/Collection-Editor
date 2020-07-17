@@ -53,6 +53,7 @@ class DatatableAction(models.Model):
     def revert_action(self):
         """
         Reverts action based on action type and stored old row
+        :exception WrongAction: raises when action value is of unimplemented type
         """
         if self.action == DatatableActionType.DELETE.value:
             self.datatable.client.add_row(self.old_row, row_id=self.old_row['_id'])
@@ -79,9 +80,6 @@ class DatatableAction(models.Model):
     def has_read_permission(request):
         return request.user.is_superuser or request.user.groups.filter(name__in=[settings.READONLY_GROUP_NAME,
                                                                                  settings.READWRITE_GROUP_NAME])
-
-    def has_object_read_permission(self, request):
-        return self.has_read_permission(request)
 
     @staticmethod
     def has_write_permission(request):
