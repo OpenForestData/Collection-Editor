@@ -1,4 +1,4 @@
-image: python:3.8-slim-buster
+image: python:3.8-alpine
 
 variables:
   DEBUG: 'True'
@@ -15,8 +15,7 @@ variables:
   MONGO_PORT: 27017
 
 before_script:
-    - apt-get update 
-    - apt-get install -y gcc git build-essential libsasl2-dev python3-dev libldap2-dev libssl-dev ldap-utils
+    - apk add make postgresql-libs gcc musl-dev postgresql-dev python3-dev git build-base openldap-dev python3-dev
     - pip install -U pip
     - pip install --ignore-installed -r requirements.txt
 
@@ -38,6 +37,8 @@ sonarqube:
 
 Flake8:
     stage: code checks
+    before_script:
+        - echo "pass"  
     script:
         - pip install flake8
         - flake8 core/ collection_editor/
@@ -71,12 +72,8 @@ Safety:
 
 Sphinx documentation development:
     stage: documentation
-    before_script:
-        - apt-get update
-        - apt-get install gcc musl-dev python3-dev git build-essential libsasl2-dev python-dev libldap2-dev libssl-dev -y
-        - pip install -r requirements.txt
-        - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
     script:
+        - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
         - cd docs/
         - make html
     artifacts:
@@ -92,15 +89,11 @@ Sphinx documentation development:
 
 Sphinx documentation:
     stage: documentation
-    before_script:
-        - apt-get update
-        - apt-get install -y gcc musl-dev python3-dev git
-        - pip install -r requirements.txt
-        - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
     script:
-        - cd docs/
-        - make html
-    artifacts:
+      - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
+      - cd docs/
+      - make html
+  artifacts:
         paths:
             - _build/html
         expire_in: 30 day
@@ -126,13 +119,14 @@ Test:
     - name: mongo:4.2
       alias: ce_mongo
   script:
-    - pip install -r requirements.txt
     - pip install -r testing_requirements.txt
     - cp example.env .env
     - python manage.py migrate
     - coverage run manage.py test
     - coverage report -m
   coverage: /^TOTAL.*\s+(\d+\%)$/
+  needs:
+    - Flake8
 
 Build docker dev image:
   image:
