@@ -90,7 +90,7 @@ Test:
     - cp example.env .env
     - python manage.py migrate
     - coverage run manage.py test
-    - coverage report -m
+    - coverage report -o cov.xml
   coverage: /^TOTAL.*\s+(\d+\%)$/
 
 Build docker dev image:
