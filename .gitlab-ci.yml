@@ -115,8 +115,8 @@ Test:
     - cp example.env .env
     - python manage.py migrate
     - coverage run manage.py test
-    - coverage report -m
     - coverage xml -o cov.xml
+    - coverage report -m
   coverage: /^TOTAL.*\s+(\d+\%)$/
   artifacts:
     paths:
