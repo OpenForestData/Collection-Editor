@@ -19,7 +19,7 @@ django.setup()
 
 # -- Project information -----------------------------------------------------
 
-project = 'Collection editor'
+project = 'Collection Editor'
 description = 'Django collection editor application'
 copyright = '2020, Whiteaster sp.o.o.'
 author = 'Whiteaster sp.o.o.'
@@ -37,7 +37,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
-    "sphinx_autodoc_typehints"
+    "sphinx_autodoc_typehints",
+    'sphinxcontrib.httpdomain',
 ]
 
 source_suffix = {
@@ -77,3 +78,7 @@ html_static_path = ['../_static']
 todo_include_todos = False
 
 
+# -- Autodoc configs ---------------------------------------------------------
+
+# Ordering
+autodoc_member_order = 'bysource'

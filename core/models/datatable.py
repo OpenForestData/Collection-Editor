@@ -1,16 +1,22 @@
+from __future__ import annotations
+
 import json
 from abc import ABC, abstractmethod
 from io import StringIO, BytesIO
+from typing import Type
 
 import pandas as pd
 from bson import ObjectId
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
+# Type imports for Docs
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models, transaction
 from django.utils.text import slugify
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
+from pymongo.results import InsertOneResult, UpdateResult, DeleteResult
 
 from core.exceptions import WrongFileType
 from core.models.datatable_action import DatatableAction, DatatableActionType
@@ -34,7 +40,7 @@ class DatatableClient(ABC):
         """
 
     @abstractmethod
-    def add_row(self, data: dict):
+    def add_row(self, data: dict, row_id: str = None):
         """
         Adds rows form given DB based on data
         """
@@ -52,7 +58,7 @@ class DatatableClient(ABC):
         """
 
     @abstractmethod
-    def upload_file_to_db(self, filepath: str):
+    def upload_file_to_db(self, file: InMemoryUploadedFile):
         """
         Upload given file as rows of a new table in DB
         """
@@ -60,9 +66,10 @@ class DatatableClient(ABC):
 
 class DatatableMongoClient(DatatableClient):
     """
-    MongoDB client
+    MongoDB client for Datatable model
     """
-    def __init__(self, collection_name: str, mongo_client=MongoClient):
+
+    def __init__(self, collection_name: str, mongo_client: Type[MongoClient] = MongoClient):
         db = mongo_client(
             host=settings.MONGO_HOST,
             port=settings.MONGO_PORT,
@@ -76,24 +83,28 @@ class DatatableMongoClient(DatatableClient):
     def get_rows(self, query: dict = None) -> Cursor:
         """
         Queries MongoDB datatable
+
         :param query: MongoDB query
+        :return: MongoDB cursor with rows returned by query or all rows if query wasn't specified
         """
         return self.collection.find(query if query else {})
 
-    def has_row(self, row_id) -> bool:
+    def has_row(self, row_id: str) -> bool:
         """
         Checks if row with given id exists
-        :param row_id:
-        :return:
+
+        :param row_id: BSON compliant row id
+        :return: True if datatable has row with specified id, False otherwise
         """
         return bool(self.collection.count_documents({'_id': ObjectId(row_id)}))
 
-    def add_row(self, data: dict, row_id: str = None):
+    def add_row(self, data: dict, row_id: str = None) -> InsertOneResult:
         """
         Creates row in datatable
-        :param data: json formatted data
-        :param row_id: optional if _id should be forced
-        :return: MongoDB insert result
+
+        :param data: MongoDB structured (json) new row data
+        :param row_id: BSON compliant unique id that new row should have
+        :return: MongoDB insert one result
         """
         data.pop('_id', None)
         if row_id:
@@ -101,28 +112,31 @@ class DatatableMongoClient(DatatableClient):
         result = self.collection.insert_one(data)
         return result
 
-    def patch_row(self, row_id: str, data: dict):
+    def patch_row(self, row_id: str, data: dict) -> UpdateResult:
         """
         Updates row in datatable
-        :param data: json formatted data
-        :param row_id:
+
+        :param data: MongoDB structured (json) new row data
+        :param row_id: BSON compliant row id of row to be updated
         :return: MongoDB update result
         """
         data.pop('_id', None)
         return self.collection.update_one({'_id': ObjectId(row_id)}, {'$set': data})
 
-    def delete_row(self, row_id: str):
+    def delete_row(self, row_id: str) -> DeleteResult:
         """
         Deletes row in datatable
-        :param row_id:
+
+        :param row_id: id of row to be deleted
         :return: MongoDB delete result
         """
         return self.collection.delete_one({'_id': ObjectId(row_id)})
 
-    def upload_file_to_db(self, file):
+    def upload_file_to_db(self, file: InMemoryUploadedFile):
         """
         Load file to as a collection of given database
-        :param file:
+
+        :param file: request file in *csv* or *xlsx* format to be uploaded to MongoDB
         """
         try:
             file_type = settings.SUPPORTED_MIME_TYPES[file.content_type]
@@ -166,71 +180,92 @@ class DatatableMongoClient(DatatableClient):
 
 
 class Datatable(models.Model):
+    """
+    Datable model representing uploaded tabular files
+    """
+
+    #: Title of a datatable
     title = models.CharField(max_length=255)
+
+    #: Name of database table containing datatable rows (has to be unique)
     collection_name = models.CharField(max_length=255, unique=True, blank=True)
+
+    #: Mapping of valid column names and their types
     columns = JSONField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         """
         Saves Datatable metadata to database
-        :return:
         """
         if not self.collection_name:
             self.collection_name = slugify(self.title)
         self.__set_database_client()
         self.__serialize_type()
-        return super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     @classmethod
-    def from_db(cls, db, field_names, values):
+    def from_db(cls, db, field_names, values) -> Datatable:
         """
         Overrides parent function to attach NoSQL client at load from DB
-        :return:
+
+        :return: instance of Datatable loaded from database
         """
         instance: Datatable = super().from_db(db, field_names, values)
         instance.__set_database_client()
         instance.__deserialize_type()
         return instance
 
-    def upload_datatable_file(self, file):
+    def upload_datatable_file(self, file: InMemoryUploadedFile):
         """
-        Upload file to NoSQL DB as table using attached client
+        Upload file to database table using attached client
+
         :param file: file to upload
-        :return:
         """
         with transaction.atomic():
             self.client.upload_file_to_db(file)
             self.columns = self.client.columns
             self.save()
 
-    def register_action(self, user, action: DatatableActionType, old_row=None, new_row=None):
+    def register_action(self, user, action: DatatableActionType, old_row: dict = None, new_row: dict = None) -> DatatableAction:
         """
         Register action committed on this Datatable to history
-        """
-        DatatableAction.objects.create(user=user,
-                                       action=action,
-                                       datatable=self,
-                                       old_row=old_row,
-                                       new_row=new_row)
 
-    def __set_database_client(self, client=DatatableMongoClient):
+        :return: created action model
+        """
+        return DatatableAction.objects.create(user=user,
+                                              action=action,
+                                              datatable=self,
+                                              old_row=old_row,
+                                              new_row=new_row)
+
+    def __set_database_client(self, client: Type[DatatableClient] = DatatableMongoClient):
+        """
+        Attaches DatatableClient client to self instance based on ``self.collection_name``
+        :param client:
+        """
         self.client = client(self.collection_name)
 
-    def __str__(self):
-        return self.title
-
-    def __repr__(self):
-        return str(self)
-
     def __serialize_type(self):
+        """
+        Serializes python native types -> strings
+        """
         if self.columns:
             for column, col_type in self.columns.items():
                 if type(col_type) == type:
                     self.columns[column] = str(col_type.__name__)
 
     def __deserialize_type(self):
+        """
+        Deserializes strings -> python native types
+        """
         for column, col_type in self.columns.items():
             self.columns[column] = eval(col_type)
+
+    def __str__(self):
+        return self.title
+
+    def __repr__(self):
+        return str(self)
 
     # DRY Permissions
 
