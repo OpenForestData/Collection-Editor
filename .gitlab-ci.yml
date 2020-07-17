@@ -1,14 +1,30 @@
-image: python:3.8-alpine
+image: python:3.8-slim-buster
+
+variables:
+  DEBUG: 'True'
+  DB_NAME: collection_editor
+  DB_HOST: postgres
+  DB_ENGINE: postgres
+  DB_DATABASE: collection_editor
+  DB_USER: ce_user
+  DB_PASSWORD: ce_password
+  MONGO_HOST: ce_mongo
+  MONGO_DATABASE: collection_editor
+  MONGO_USER: ce_user
+  MONGO_PASSWORD: ce_password
+  MONGO_PORT: 27017
 
 before_script:
-    - apk add --no-cache git python3-dev gcc musl-dev postgresql-dev build-base openldap-dev
+    - apt-get update 
+    - apt-get install -y gcc git build-essential libsasl2-dev python3-dev libldap2-dev libssl-dev ldap-utils
     - pip install -U pip
     - pip install --ignore-installed -r requirements.txt
 
 stages:
-    - sonarqube
-    - code checks
-    - build
+  - sonarqube
+  - code checks
+  - tests
+  - build
 
 sonarqube:
     image: sonarsource/sonar-scanner-cli
@@ -52,28 +68,53 @@ Safety:
         - pip install safety
         - safety check -r requirements.txt
 
+Test:
+  stage: tests
+  variables:
+    POSTGRES_USER: ce_user
+    POSTGRES_PASSWORD: ce_password
+    POSTGRES_DB: collection_editor
+    POSTGRES_HOST_AUTH_METHOD: trust
+    MONGO_INITDB_DATABASE: collection_editor
+    MONGO_INITDB_ROOT_USERNAME: ce_user
+    MONGO_INITDB_ROOT_PASSWORD: ce_password
+    TESTING: 'True'
+  services:
+    - name: postgres:12-alpine
+      alias: postgres
+    - name: mongo:4.2
+      alias: ce_mongo
+  script:
+    - pip install -r requirements.txt
+    - pip install -r testing_requirements.txt
+    - cp example.env .env
+    - python manage.py migrate
+    - coverage run manage.py test
+    - coverage report -m
+  coverage: /^TOTAL.*\s+(\d+\%)$/
+
 Build docker dev image:
-    image: 
-        name: gcr.io/kaniko-project/executor:debug
-        entrypoint: [""]
-    before_script:
-        - echo "pass"
-    stage: build
-    script:
-        - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"gitlab-ci-token\",\"password\":\"$CI_JOB_TOKEN\"}}}" > /kaniko/.docker/config.json
-        - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH --destination $CI_REGISTRY_IMAGE:development
-    only:
-        - development
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  before_script:
+    - echo "pass"
+  stage: build
+  script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"gitlab-ci-token\",\"password\":\"$CI_JOB_TOKEN\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH --destination $CI_REGISTRY_IMAGE:development
+  only:
+    - development
 
 Build docker master image:
-    image: 
-        name: gcr.io/kaniko-project/executor:debug
-        entrypoint: [""]
-    before_script:
-        - echo "pass"
-    stage: build
-    script:
-        - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"gitlab-ci-token\",\"password\":\"$CI_JOB_TOKEN\"}}}" > /kaniko/.docker/config.json
-        - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --destination $CI_REGISTRY_IMAGE:latest
-    only:
-        - master
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  before_script:
+    - echo "pass"
+  stage: build
+  script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"gitlab-ci-token\",\"password\":\"$CI_JOB_TOKEN\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG --destination $CI_REGISTRY_IMAGE:latest
+  only:
+    - master

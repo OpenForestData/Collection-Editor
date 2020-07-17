@@ -1,5 +1,6 @@
 import csv
 import os
+from pathlib import Path
 
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -75,6 +76,9 @@ class DatatableExportSerializer(serializers.ModelSerializer):
         return dataset_pid
 
     def export(self, cursor):
+        # Create temp directory if doesn't exist
+        Path(settings.TMP_MEDIA_PATH).mkdir(parents=True, exist_ok=True)
+
         tmp_file_name = os.path.join(settings.TMP_MEDIA_PATH, self.instance.title + '.csv')
         try:
             with open(tmp_file_name, 'w') as file:

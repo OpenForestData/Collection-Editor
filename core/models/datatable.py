@@ -18,40 +18,59 @@ from core.models.datatable_action import DatatableAction, DatatableActionType
 
 class DatatableClient(ABC):
     """
-    Interface for Datable Client.
+    Interface for Datatable Client.
     """
 
     @abstractmethod
     def get_rows(self, query: dict = None):
-        pass
+        """
+        Returns rows form given DB based on query
+        """
+
+    @abstractmethod
+    def has_row(self, row_id: str):
+        """
+        Adds rows form given DB based on data
+        """
 
     @abstractmethod
     def add_row(self, data: dict):
-        pass
+        """
+        Adds rows form given DB based on data
+        """
 
     @abstractmethod
     def patch_row(self, row_id: str, data: dict):
-        pass
+        """
+        Updates row specified by id with data
+        """
 
     @abstractmethod
     def delete_row(self, row_id: str):
-        pass
+        """
+        Deletes row specified by id
+        """
 
     @abstractmethod
     def upload_file_to_db(self, filepath: str):
-        pass
+        """
+        Upload given file as rows of a new table in DB
+        """
 
 
 class DatatableMongoClient(DatatableClient):
-    def __init__(self, collection_name: str):
-        self.db = MongoClient(
+    """
+    MongoDB client
+    """
+    def __init__(self, collection_name: str, mongo_client=MongoClient):
+        db = mongo_client(
             host=settings.MONGO_HOST,
             port=settings.MONGO_PORT,
             username=settings.MONGO_USER,
             password=settings.MONGO_PASSWORD,
             connect=True
         )[settings.MONGO_DATABASE]
-        self.collection: Collection = self.db[collection_name]
+        self.collection: Collection = db[collection_name]
         self.columns = {}
 
     def get_rows(self, query: dict = None) -> Cursor:
@@ -78,7 +97,7 @@ class DatatableMongoClient(DatatableClient):
         """
         data.pop('_id', None)
         if row_id:
-            data['_id'] = row_id
+            data['_id'] = ObjectId(row_id)
         result = self.collection.insert_one(data)
         return result
 
@@ -105,8 +124,9 @@ class DatatableMongoClient(DatatableClient):
         Load file to as a collection of given database
         :param file:
         """
-        file_type = settings.SUPPORTED_MIME_TYPES[file.content_type]
-        if file_type not in ['csv', 'excel']:
+        try:
+            file_type = settings.SUPPORTED_MIME_TYPES[file.content_type]
+        except KeyError:
             raise WrongFileType(f'File with content-type {file.content_type} is unsupported.')
 
         if file_type == 'csv':
@@ -115,8 +135,7 @@ class DatatableMongoClient(DatatableClient):
             in_memory_file = BytesIO(file.file.read())
 
         # drop datatable if exists
-        if in_memory_file:
-            self.collection.delete_many({})
+        self.collection.delete_many({})
 
         if file_type == 'csv':
             # CSV can be loaded in chunks
@@ -206,8 +225,26 @@ class Datatable(models.Model):
     def __serialize_type(self):
         if self.columns:
             for column, col_type in self.columns.items():
-                self.columns[column] = str(col_type.__name__)
+                if type(col_type) == type:
+                    self.columns[column] = str(col_type.__name__)
 
     def __deserialize_type(self):
         for column, col_type in self.columns.items():
             self.columns[column] = eval(col_type)
+
+    # DRY Permissions
+
+    @staticmethod
+    def has_read_permission(request):
+        return request.user.is_superuser or request.user.groups.filter(name__in=[settings.READONLY_GROUP_NAME,
+                                                                                 settings.READWRITE_GROUP_NAME])
+
+    def has_object_read_permission(self, request):
+        return self.has_read_permission(request)
+
+    @staticmethod
+    def has_write_permission(request):
+        return request.user.is_superuser or request.user.groups.filter(name=settings.READWRITE_GROUP_NAME)
+
+    def has_object_write_permission(self, request):
+        return self.has_write_permission(request)

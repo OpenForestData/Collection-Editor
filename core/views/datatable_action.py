@@ -1,4 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
+from dry_rest_permissions.generics import DRYPermissions
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -10,8 +12,10 @@ from core.serializers import DatatableActionReadOnlySerializer
 class DatatableActionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DatatableAction.objects.all()
     serializer_class = DatatableActionReadOnlySerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['datatable', 'action']
+    permission_classes = (DRYPermissions,)
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filter_fields = ['datatable', 'action', 'user', 'reverted']
+    ordering_fields = ['created_at']
 
     @action(detail=True, methods=['POST'])
     def revert(self, request, pk=None, **kwargs):
