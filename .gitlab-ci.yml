@@ -65,7 +65,7 @@ Safety:
 Sphinx documentation development:
   stage: documentation
   script:
-    - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
+    - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints sphinxcontrib.httpdomain
     - cd docs/
     - make html
   artifacts:
@@ -82,7 +82,7 @@ Sphinx documentation development:
 Sphinx documentation:
   stage: documentation
   script:
-    - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
+    - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints sphinxcontrib.httpdomain
     - cd docs/
     - make html
   artifacts:
