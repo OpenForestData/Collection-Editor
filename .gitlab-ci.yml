@@ -15,9 +15,9 @@ variables:
   MONGO_PORT: 27017
 
 before_script:
-    - apk add make postgresql-libs gcc musl-dev postgresql-dev python3-dev git build-base openldap-dev python3-dev
-    - pip install -U pip
-    - pip install --ignore-installed -r requirements.txt
+  - apk add make postgresql-libs gcc musl-dev postgresql-dev python3-dev git build-base openldap-dev python3-dev
+  - pip install -U pip
+  - pip install --ignore-installed -r requirements.txt
 
 stages:
   - sonarqube
@@ -27,80 +27,80 @@ stages:
   - build
 
 sonarqube:
-    image: sonarsource/sonar-scanner-cli
-    stage: sonarqube
-    before_script: []
-    script:
-        - sonar-scanner -Dsonar.projectKey=CollectionEditor -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.whiteaster.com -Dsonar.login=3c1c5d7aec1288650be47427f18a5990e94024eb
-    only:
-        - master
+  image: sonarsource/sonar-scanner-cli
+  stage: sonarqube
+  before_script: []
+  script:
+    - sonar-scanner -Dsonar.projectKey=CollectionEditor -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.whiteaster.com -Dsonar.login=3c1c5d7aec1288650be47427f18a5990e94024eb
+  only:
+    - master
 
 Flake8:
-    stage: code checks
-    before_script:
-        - echo "pass"  
-    script:
-        - pip install flake8
-        - flake8 core/ collection_editor/
+  stage: code checks
+  before_script:
+    - echo "pass"  
+  script:
+    - pip install flake8
+    - flake8 core/ collection_editor/
 
 PyLint:
-    stage: code checks
-    allow_failure: true
-    script:
-        - pip install pylint pylint_django
-        - pylint --rcfile ./.pylintrc collection_editor core
+  stage: code checks
+  allow_failure: true
+  script:
+    - pip install pylint pylint_django
+    - pylint --rcfile ./.pylintrc collection_editor core
 
 Piprot:
-    stage: code checks
-    allow_failure: true
-    script:
-        - pip install piprot
-        - piprot
+  stage: code checks
+  allow_failure: true
+  script:
+    - pip install piprot
+    - piprot
 
 PipCheck:
-    stage: code checks
-    allow_failure: true
-    script:
-        - pip check
+  stage: code checks
+  allow_failure: true
+  script:
+    - pip check
 
 Safety:
-    stage: code checks
-    allow_failure: true
-    script:
-        - pip install safety
-        - safety check -r requirements.txt
+  stage: code checks
+  allow_failure: true
+  script:
+    - pip install safety
+    - safety check -r requirements.txt
 
 Sphinx documentation development:
-    stage: documentation
-    script:
-        - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
-        - cd docs/
-        - make html
-    artifacts:
-        paths:
-            - _build/html
-        expire_in: 3 day
-    only:
-        - branches
-    except:
-        - master
-    needs:
-        - Flake8
+  stage: documentation
+  script:
+    - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
+    - cd docs/
+    - make html
+  artifacts:
+    paths:
+        - _build/html
+    expire_in: 3 day
+  only:
+    - branches
+  except:
+    - master
+  needs:
+    - Flake8
 
 Sphinx documentation:
-    stage: documentation
-    script:
-      - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
-      - cd docs/
-      - make html
+  stage: documentation
+  script:
+    - pip install sphinx sphinx_rtd_theme sphinx-autodoc-typehints
+    - cd docs/
+    - make html
   artifacts:
-        paths:
-            - _build/html
-        expire_in: 30 day
-    only:
-        - master
-    needs:
-        - Flake8
+    paths:
+      - _build/html
+    expire_in: 30 day
+  only:
+    - master
+  needs:
+    - Flake8
 
 Test:
   stage: tests
