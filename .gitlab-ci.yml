@@ -116,7 +116,7 @@ Test:
     - python manage.py migrate
     - coverage run manage.py test
     - coverage report -m
-    - coverage report -o cov.xml
+    - coverage xml -o cov.xml
   coverage: /^TOTAL.*\s+(\d+\%)$/
   artifacts:
     paths:
