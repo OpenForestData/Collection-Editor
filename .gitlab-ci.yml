@@ -1,4 +1,4 @@
-image: python:3.8-alpine
+image: python:3.8-slim-buster
 
 variables:
   DEBUG: 'True'
@@ -15,25 +15,17 @@ variables:
   MONGO_PORT: 27017
 
 before_script:
-  - apk add make postgresql-libs gcc musl-dev postgresql-dev python3-dev git build-base openldap-dev python3-dev
+  - apt-get update
+  - apt-get install -y --no-install-recommends gcc git build-essential libsasl2-dev python3-dev libldap2-dev libssl-dev ldap-utils
   - pip install -U pip
   - pip install --ignore-installed -r requirements.txt
 
 stages:
-  - sonarqube
   - code checks
   - documentation
   - tests
+  - sonarqube
   - build
-
-sonarqube:
-  image: sonarsource/sonar-scanner-cli
-  stage: sonarqube
-  before_script: []
-  script:
-    - sonar-scanner -Dsonar.projectKey=CollectionEditor -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.whiteaster.com -Dsonar.login=3c1c5d7aec1288650be47427f18a5990e94024eb
-  only:
-    - master
 
 Flake8:
   stage: code checks
@@ -124,9 +116,27 @@ Test:
     - python manage.py migrate
     - coverage run manage.py test
     - coverage report -m
+    - coverage -o cov.xml
   coverage: /^TOTAL.*\s+(\d+\%)$/
+  artifacts:
+    paths:
+        - cov.xml
+    expire_in: 1h
   needs:
     - Flake8
+
+sonarqube:
+  image: sonarsource/sonar-scanner-cli
+  stage: sonarqube
+  before_script: []
+  script:
+    - sonar-scanner -Dsonar.projectKey=CollectionEditor -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.whiteaster.com -Dsonar.login=3c1c5d7aec1288650be47427f18a5990e94024eb
+  dependencies: 
+    - Test
+  only:
+    - master
+  needs:
+    - Test
 
 Build docker dev image:
   image:
