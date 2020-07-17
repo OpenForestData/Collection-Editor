@@ -1,4 +1,5 @@
-from rest_framework import status, mixins, viewsets
+from dry_rest_permissions.generics import DRYPermissions
+from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -13,6 +14,7 @@ from core.serializers import DatatableSerializer, DatatableReadOnlySerializer, D
 class DatatableViewSet(MultiSerializerMixin,
                        mixins.CreateModelMixin,
                        viewsets.ReadOnlyModelViewSet):
+    permission_classes = (DRYPermissions,)
     serializers = {
         'default': DatatableReadOnlySerializer,
         'create': DatatableSerializer,
@@ -41,12 +43,9 @@ class DatatableViewSet(MultiSerializerMixin,
         mongo_cursor = ordering_filter.order_cursor(request, mongo_cursor)
 
         page = pagination_class.paginate_queryset(mongo_cursor, request)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return pagination_class.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(mongo_cursor, many=True)
-        return Response(serializer.data)
+        serializer = self.get_serializer(page, many=True)
+        return pagination_class.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=['POST'], url_path='row', url_name='add-row')
     def add_row(self, request, pk=None, **kwargs):
@@ -62,13 +61,9 @@ class DatatableViewSet(MultiSerializerMixin,
 
         pagination_class = MongoCursorLimitOffsetPagination()
         page = pagination_class.paginate_queryset(mongo_cursor, request)
-        if page is not None:
-            serializer = DatatableRowsReadOnlySerializer(page, many=True)
-            return pagination_class.get_paginated_response(serializer.data)
 
-        serializer = DatatableRowsReadOnlySerializer(mongo_cursor, many=True)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer = DatatableRowsReadOnlySerializer(page, many=True)
+        return pagination_class.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=['PATCH'], url_path='row/(?P<row_id>[^/.]+)', url_name='row')
     def patch_row(self, request, pk=None, row_id=None, **kwargs):

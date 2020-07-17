@@ -6,4 +6,5 @@
 cp /app/example.env /app/.env
 
 python /app/manage.py migrate
+python /app/manage.py loaddata initial_groups.json
 python /app/manage.py runserver 0.0.0.0:8000

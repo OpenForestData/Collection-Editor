@@ -11,9 +11,6 @@ class MongoCursorLimitOffsetPagination(LimitOffsetPagination):
     def paginate_queryset(self, cursor: Cursor, request, view=None):
         self.count = self.get_count(cursor)
         self.limit = self.get_limit(request)
-        if self.limit is None:
-            return None
-
         self.offset = self.get_offset(request)
         self.request = request
         if self.count > self.limit and self.template is not None:

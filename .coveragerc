@@ -1,0 +1,9 @@
+[run]
+branch = true
+omit =
+    *__init__.py*
+    *manage.py*
+    collection_editor/*
+    venv/*
+    *migrations*
+    *tests*
