@@ -1,6 +1,12 @@
 Serializers
 ===========
 
+Datatable
+---------
+
+General
+^^^^^^^
+
 .. autoclass:: core.serializers.datatable.DatatableReadOnlySerializer
     :members:
 
@@ -10,13 +16,18 @@ Serializers
 .. autoclass:: core.serializers.datatable.DatatableExportSerializer
     :members:
 
+Row operation
+^^^^^^^^^^^^^
 
-.. autoclass:: core.serializers.datatable.DatatableActionReadOnlySerializer
+.. autoclass:: core.serializers.datatable_rows.DatatableRowsReadOnlySerializer
+    :members:
+
+.. autoclass:: core.serializers.datatable_rows.DatatableRowsSerializer
     :members:
 
 
-.. autoclass:: core.serializers.datatable.DatatableRowsReadOnlySerializer
-    :members:
+DatatableAction
+---------------
 
-.. autoclass:: core.serializers.datatable.DatatableRowsSerializer
+.. autoclass:: core.serializers.datatable_action.DatatableActionReadOnlySerializer
     :members:

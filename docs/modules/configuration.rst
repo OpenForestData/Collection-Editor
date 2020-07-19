@@ -55,8 +55,8 @@ Settings
 --------
 Default, created on the start of an application permissions group names:
 
-``READONLY_GROUP_NAME = 'ReadOnly'``
-``READWRITE_GROUP_NAME = 'ReadWrite'``
+| ``READONLY_GROUP_NAME = 'ReadOnly'``
+| ``READWRITE_GROUP_NAME = 'ReadWrite'``
 
 In case of changing those names the change has to be also implemented in ``core/fixtures/initial_groups.json`` file.
 

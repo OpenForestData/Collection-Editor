@@ -97,6 +97,7 @@ Sphinx documentation:
 Test:
   stage: tests
   variables:
+    SECRET_KEY: Test
     POSTGRES_USER: ce_user
     POSTGRES_PASSWORD: ce_password
     POSTGRES_DB: collection_editor
