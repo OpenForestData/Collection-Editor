@@ -16,9 +16,6 @@ RUN apt-get update \
 
 COPY ./requirements.txt /app
 RUN  pip install -r requirements.txt
-# TODO: Delete this after test development
-COPY ./testing_requirements.txt /app
-RUN  pip install -r testing_requirements.txt
 
 # Copy data
 ADD . /app

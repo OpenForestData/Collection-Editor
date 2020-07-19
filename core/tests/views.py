@@ -203,11 +203,3 @@ class DatatableActionViewSetTestCase(APITestCase):
         url = reverse('datatableaction-revert', kwargs={'pk': self.datatable_reverted_action.pk})
         response = self.client.post(url)
         self.assertEqual(response.status_code, 400, msg=response.data)
-
-    def test_retrieve_permissions(self):
-        readonly_user = UserFactory()
-        readonly_user.groups.add(Group.objects.get(name=settings.READONLY_GROUP_NAME))
-        self.client.force_authenticate(readonly_user)
-        url = reverse('datatableaction-detail', kwargs={'pk': self.datatable_action.pk})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200, msg=response.data)
