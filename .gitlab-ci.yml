@@ -1,7 +1,8 @@
 image: python:3.8-slim-buster
 
 variables:
-  DEBUG: 'True'
+  DEBUG: 'False'
+  SECRET_KEY: Test
   DB_NAME: collection_editor
   DB_HOST: postgres
   DB_ENGINE: postgres
@@ -97,7 +98,6 @@ Sphinx documentation:
 Test:
   stage: tests
   variables:
-    SECRET_KEY: Test
     POSTGRES_USER: ce_user
     POSTGRES_PASSWORD: ce_password
     POSTGRES_DB: collection_editor
