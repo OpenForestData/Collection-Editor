@@ -5,7 +5,7 @@ Configuration page
 
 
 Docker-compose environments
---------------------------
+---------------------------
 
 General
 ^^^^^^^
@@ -52,7 +52,7 @@ Development settings
 
 
 Settings
--------
+--------
 Default, created on the start of an application permissions group names:
 
 ``READONLY_GROUP_NAME = 'ReadOnly'``
