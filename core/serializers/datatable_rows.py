@@ -12,6 +12,7 @@ class DatatableRowsReadOnlySerializer(serializers.Serializer):
     """
     Serializer for datatable rows read only actions.
     """
+
     class Meta:
         model = Datatable
 
@@ -38,7 +39,7 @@ class DatatableRowsSerializer(serializers.Serializer):
     class Meta:
         model = Datatable
 
-    def is_valid(self, raise_exception: bool=False) -> bool:
+    def is_valid(self, raise_exception: bool = False) -> bool:
         """
         Validates if data passed to serializer contains at least one column value for a row.
 
