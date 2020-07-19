@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 from pyDataverse.api import Api
+from pymongo.cursor import Cursor
 from requests import ConnectionError
 from rest_framework import serializers
 
@@ -13,6 +14,9 @@ from core.models import Datatable
 
 
 class DatatableReadOnlySerializer(serializers.ModelSerializer):
+    """
+    Datatable serializer for read-only operations
+    """
     class Meta:
         model = Datatable
         fields = ['id', 'title', 'collection_name']
@@ -20,16 +24,22 @@ class DatatableReadOnlySerializer(serializers.ModelSerializer):
 
 
 class DatatableSerializer(serializers.ModelSerializer):
+    """
+    Datatable serializer for read-write operations
+    """
+
     file = serializers.FileField(write_only=True)
 
     class Meta:
         model = Datatable
         exclude = ['columns']
 
-    def validate_file(self, file: InMemoryUploadedFile):
+    def validate_file(self, file: InMemoryUploadedFile) -> InMemoryUploadedFile:
         """
         Checks if file content-type is supported
-        :param file:
+
+        :param file: uploaded file
+        :return: validated file
         """
         if file.content_type not in settings.SUPPORTED_MIME_TYPES:
             raise serializers.ValidationError('Unsupported file type.')
@@ -38,8 +48,9 @@ class DatatableSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """
         Creates datatable metadata and uploads file as datable content
-        :param validated_data:
-        :return: datatable instance
+
+        :param validated_data: data validated by serializer
+        :return: created Datatable instance
         """
         file = validated_data.pop('file')
         with transaction.atomic():
@@ -49,6 +60,9 @@ class DatatableSerializer(serializers.ModelSerializer):
 
 
 class DatatableExportSerializer(serializers.ModelSerializer):
+    """
+    Datatable serializer for exporting user uploaded file to database
+    """
     dataset_pid = serializers.CharField(write_only=True, required=True)
 
     class Meta:
@@ -61,7 +75,15 @@ class DatatableExportSerializer(serializers.ModelSerializer):
         self.client = Api(base_url=settings.DATAVERSE_URL,
                           api_token=settings.DATAVERSE_ACCESS_TOKEN)
 
-    def validate_dataset_pid(self, dataset_pid):
+    def validate_dataset_pid(self, dataset_pid: str) -> str:
+        """
+        Validates if:
+          -  Dataverse client can connect to Dataverse
+          -  supplied dataset pid corresponds to existing Dataset in Dataverse
+
+        :param dataset_pid: Identifier of Dataverse Dataset
+        :return: validated Dataset identifier
+        """
         if self.client.status != 'OK':
             raise serializers.ValidationError('Can\'t connect to Dataverse server.')
 
@@ -75,7 +97,17 @@ class DatatableExportSerializer(serializers.ModelSerializer):
 
         return dataset_pid
 
-    def export(self, cursor):
+    def export(self, cursor: Cursor):
+        """
+        Exports user requested Datatable with applied filters to Dataverse. To do so temporary .csv file is created
+        form user submitted Datatable query and uploading said file with Dataverse client.
+
+        Finally temporary file is deleted.
+
+        :param cursor: MongoDB cursor build from user query
+        :return: validated Dataset identifier
+        """
+
         # Create temp directory if doesn't exist
         Path(settings.TMP_MEDIA_PATH).mkdir(parents=True, exist_ok=True)
 

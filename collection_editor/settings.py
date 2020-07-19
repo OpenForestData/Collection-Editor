@@ -27,7 +27,7 @@ if os.environ.get('READ_DOT_ENV'):
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'k23q)_j(t#6h&5er=e5w^c#=4f#q4t-gw(=hewkpw_c7p!*%*^'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', False)
@@ -101,10 +101,10 @@ WSGI_APPLICATION = 'collection_editor.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get('DB_NAME'),
+        'NAME': os.environ.get('DB_NAME', 'collection_editor'),
         'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
+        'HOST': os.environ.get('DB_HOST', 'ce_db'),
         'PORT': os.environ.get('DB_PORT', 5432),
     },
 }
@@ -142,7 +142,7 @@ AUTH_LDAP_BIND_PASSWORD = os.environ.get('LDAP_PASSWORD')
 AUTH_LDAP_USER_SEARCH = LDAPSearch(
     os.environ.get('LDAP_SEARCH_HOST'),
     ldap.SCOPE_SUBTREE,
-    '({}=%(user)s)'.format(os.environ.get('LDAP_FORMAT')),
+    '({}=%(user)s)'.format(os.environ.get('LDAP_FORMAT', 'sAMAccountName')),
 )
 
 AUTH_LDAP_USER_ATTR_MAP = {

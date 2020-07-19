@@ -1,32 +1,22 @@
-Utilities
-=========
+Serializers
+===========
 
-Exceptions
-----------
-.. autoclass:: core.exceptions.WrongAction
+.. autoclass:: core.serializers.datatable.DatatableReadOnlySerializer
     :members:
 
-.. autoclass:: core.exceptions.WrongFileType
+.. autoclass:: core.serializers.datatable.DatatableSerializer
+    :members:
+
+.. autoclass:: core.serializers.datatable.DatatableExportSerializer
     :members:
 
 
-Paginators
-----------
-.. autoclass:: core.paginators.MongoCursorLimitOffsetPagination
+.. autoclass:: core.serializers.datatable.DatatableActionReadOnlySerializer
     :members:
 
-Mixins
-------
-.. autoclass:: core.mixins.MultiSerializerMixin
+
+.. autoclass:: core.serializers.datatable.DatatableRowsReadOnlySerializer
     :members:
 
-Filters
--------
-.. autoclass:: core.filters.MongoFilter
-    :members:
-
-.. autoclass:: core.filters.RowOrdering
-    :members:
-
-.. autoclass:: core.filters.RowFiltering
+.. autoclass:: core.serializers.datatable.DatatableRowsSerializer
     :members:

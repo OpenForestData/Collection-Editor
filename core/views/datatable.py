@@ -150,11 +150,12 @@ class DatatableViewSet(MultiSerializerMixin,
 
         .. http:post:: /datatable/(int:datatable_id)/export/
 
-
-
-            :query sort: one of ``hit``, ``created-at``
-            :query offset: offset number. default is 0
-            :query limit: limit number. default is 100
+            :query $column_name: value of specified column
+                    eg.: ``?species=deer``
+            :query logical_query: nested query build with ``and, or`` operators
+                    eg.: ``?logical_query=or(species=deer, and(species=bear, color=black))``
+            :query ordering: coma separated **$column_name** values, prefixed with '-' to sort descending
+                    eg.: ``?ordering=species,-height``
             :param dataset_id: pid of Dataverse dataset
             :reqheader Accept: the response content type depends on
                               :mailheader:`Accept` header
