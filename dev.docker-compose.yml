@@ -63,27 +63,14 @@ services:
 
   ce_backend: &ce_backend
     container_name: "ce_backend"
-    image: "registry.gitlab.whiteaster.com/openforestdata/backend/collection-editor:latest"
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
-    environment:
-        - DEBUG=True
-        - DB_NAME=collection_editor
-        - DB_HOST=ce_db
-        - DB_ENGINE=postgres
-        - DB_DATABASE=collection_editor
-        - DB_USER=ce_user
-        - DB_PASSWORD=ce_password
-        - MONGO_HOST=ce_mongo
-        - MONGO_DATABASE=collection_editor
-        - MONGO_USER=ce_user
-        - MONGO_PASSWORD=ce_password
-        - LDAP_HOST='ldap://ldap.forumsys.com'
-        - LDAP_USERNAME='cn=read-only-admin,dc=example,dc=com'
-        - LDAP_PASSWORD='password'
-        - LDAP_SEARCH_HOST=''
-        - LDAP_FORMAT='sAMAccountName'
-        - DATAVERSE_URL=https://dataverse.whiteaster.com
-        - DATAVERSE_ACCESS_TOKEN=9c9d2213-482d-405d-9490-96b984b96898
+    volumes:
+      - ./:/app/
+    env_file:
+      - .env
     labels:
       - traefik.enable=true
       - traefik.http.routers.ce_backend.rule=Host(`${URL}`)
