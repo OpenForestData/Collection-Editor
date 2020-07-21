@@ -20,7 +20,6 @@ RUN  pip install -r requirements.txt
 # Copy data
 ADD . /app
 
-
 RUN chmod +x /app/docker/entrypoint.sh
 RUN chmod +x /app/docker/wait_for.sh
 RUN chmod -R 755 /app
