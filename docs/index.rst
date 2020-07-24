@@ -13,6 +13,8 @@ Welcome to Collection Editor documentation!
    modules/configuration.rst
    modules/views.rst
    modules/models.rst
+   modules/serializers.rst
+   modules/utilities.rst
    modules/about.rst
 
 
