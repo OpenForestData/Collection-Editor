@@ -50,6 +50,7 @@ THIRD_PARTY_APPS = [
     'rest_framework',
     'django_filters',
     'dry_rest_permissions',
+    'corsheaders',
 ]
 
 LOCAL_APPS = [
@@ -68,6 +69,7 @@ if TESTING:
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -174,6 +176,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Application specific settings
 
@@ -219,3 +222,10 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 # If this values are changed, change initial_groups fixture to match them
 READONLY_GROUP_NAME = 'ReadOnly'
 READWRITE_GROUP_NAME = 'ReadWrite'
+
+# CORS
+if DEBUG:
+    CORS_ORIGIN_ALLOW_ALL = True
+    CORS_ORIGIN_REGEX_WHITELIST = [
+        r"^.*$",
+    ]

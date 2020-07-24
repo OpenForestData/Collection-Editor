@@ -42,7 +42,7 @@ class DatatableSerializer(serializers.ModelSerializer):
         :return: validated file
         """
         if file.content_type not in settings.SUPPORTED_MIME_TYPES:
-            raise serializers.ValidationError('Unsupported file type.')
+            raise serializers.ValidationError(f'Unsupported file type. File is of type {file.content_type}')
         return file
 
     def create(self, validated_data):

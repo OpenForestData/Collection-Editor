@@ -3,7 +3,6 @@ Configuration
 
 Configuration page
 
-
 Docker-compose environments
 ---------------------------
 
@@ -59,4 +58,3 @@ Default, created on the start of an application permissions group names:
 | ``READWRITE_GROUP_NAME = 'ReadWrite'``
 
 In case of changing those names the change has to be also implemented in ``core/fixtures/initial_groups.json`` file.
-

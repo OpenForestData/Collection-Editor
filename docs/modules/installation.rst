@@ -3,7 +3,7 @@ Installation
 
 Installation page
 
-Requiremenets
+Requirements
 -------------
 
 You need installed Docker and Docker-Compose to start project.
@@ -54,3 +54,4 @@ Deployment
 .. _Windows/macOS: https://docs.docker.com/desktop/
 .. _GNU/Linux: https://docs.docker.com/engine/install/
 .. _Docker Compose: https://docs.docker.com/compose/
+

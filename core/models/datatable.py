@@ -258,8 +258,9 @@ class Datatable(models.Model):
         """
         Deserializes strings -> python native types
         """
-        for column, col_type in self.columns.items():
-            self.columns[column] = eval(col_type)
+        if self.columns:
+            for column, col_type in self.columns.items():
+                self.columns[column] = eval(col_type)
 
     def __str__(self):
         return self.title
