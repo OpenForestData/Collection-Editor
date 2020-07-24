@@ -60,7 +60,7 @@ class DatatableRowsSerializer(serializers.Serializer):
         Yields Datatable columns as valid writable fields
         """
         for column in self.instance.columns:
-            field = serializers.CharField(required=False)
+            field = serializers.CharField(required=False, allow_blank=True)
             field.field_name = column
             field.source_attrs = [column]
             yield field
