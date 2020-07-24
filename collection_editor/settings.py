@@ -226,3 +226,6 @@ READWRITE_GROUP_NAME = 'ReadWrite'
 # CORS
 if DEBUG:
     CORS_ORIGIN_ALLOW_ALL = True
+    CORS_ORIGIN_REGEX_WHITELIST = [
+        r"^.*$",
+    ]
