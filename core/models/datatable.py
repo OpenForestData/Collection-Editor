@@ -226,7 +226,8 @@ class Datatable(models.Model):
             self.columns = self.client.columns
             self.save()
 
-    def register_action(self, user, action: DatatableActionType, old_row: dict = None, new_row: dict = None) -> DatatableAction:
+    def register_action(self, user, action: DatatableActionType, old_row: dict = None,
+                        new_row: dict = None) -> DatatableAction:
         """
         Register action committed on this Datatable to history
 
