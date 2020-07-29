@@ -14,6 +14,7 @@ class MongoFilter(ABC):
     """
     Abstract base class for filters operating on MongoDB cursor
     """
+
     def __init__(self, columns):
         self.columns = columns
 
@@ -37,14 +38,14 @@ class MongoFilter(ABC):
 
     def validate_fields(self, field_dict: dict) -> Dict[str, object]:
         """
-        Removes invalid fields form given dict and cast type of valid ones to one specified by their column
+        Removes invalid fields form given dict
 
         :param field_dict: fields to be validated
         :return: validated fields
         """
+
         valid_field_names = self.remove_invalid_fields(field_dict)
-        return {key: self.columns[key](val) for key, val in field_dict.items() if
-                key in valid_field_names}
+        return {key: val for key, val in field_dict.items() if key in valid_field_names}
 
 
 class RowOrdering(MongoFilter):
@@ -99,8 +100,11 @@ class RowFiltering(MongoFilter):
         :param request: Request to extract filtering params from
         :return: Dict representing MongoDB compliant query
         """
-        filtering_params = {param: val for param, val in
-                            request.query_params.items()}
+
+        filtering_params = {}
+        for param, val in request.query_params.items():
+            filtering_params[param] = float(val) if val.isnumeric() else val
+
         filtering = None
         if filtering_params:
             filtering = self.validate_fields(filtering_params)
