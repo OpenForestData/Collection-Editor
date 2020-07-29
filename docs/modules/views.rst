@@ -47,10 +47,15 @@ DatatableAction
 
         Returns list of all DatatablesActions
 
-        .. http:get:: /datatable/actions/
+        .. http:get:: /datatable/history/
 
             :query offset: offset number. default is 0
             :query limit: limit number. default is 100
+            :query datatable: filter by datatable id
+            :query action: filter by action type
+            :query user: filter by user id
+            :query reverted: filter by reverted status
+            :query ordering: ordering param, can be `created_at`
             :reqheader Authorization: optional Bearer (JWT) token to authenticate
             :statuscode 200: no error
             :statuscode 401: user unauthorized
