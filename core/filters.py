@@ -38,14 +38,18 @@ class MongoFilter(ABC):
 
     def validate_fields(self, field_dict: dict) -> Dict[str, object]:
         """
-        Removes invalid fields form given dict
+        Removes invalid fields form given dict and casts numeric value to float (to be searchable in Mongo)
 
         :param field_dict: fields to be validated
         :return: validated fields
         """
 
         valid_field_names = self.remove_invalid_fields(field_dict)
-        return {key: val for key, val in field_dict.items() if key in valid_field_names}
+        validated_fields = {}
+        for key, val in field_dict.items():
+            if key in valid_field_names:
+                validated_fields[key] = float(val) if val.isnumeric() else val
+        return validated_fields
 
 
 class RowOrdering(MongoFilter):
@@ -101,9 +105,7 @@ class RowFiltering(MongoFilter):
         :return: Dict representing MongoDB compliant query
         """
 
-        filtering_params = {}
-        for param, val in request.query_params.items():
-            filtering_params[param] = float(val) if val.isnumeric() else val
+        filtering_params = {key: val for key, val in request.query_params.items()}
 
         filtering = None
         if filtering_params:
