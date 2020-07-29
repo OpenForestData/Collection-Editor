@@ -154,7 +154,7 @@ class DatatableMongoClient(DatatableClient):
         if file_type == 'csv':
             # CSV can be loaded in chunks
             chunk = None
-            for chunk in pd.read_csv(in_memory_file, chunksize=2048):
+            for chunk in pd.read_csv(in_memory_file, chunksize=2048, sep=';'):
                 payload = json.loads(chunk.to_json(orient='records', date_format='iso'))
                 self.collection.insert_many(payload)
             self.columns = self.__get_column_types(chunk)
@@ -226,7 +226,8 @@ class Datatable(models.Model):
             self.columns = self.client.columns
             self.save()
 
-    def register_action(self, user, action: DatatableActionType, old_row: dict = None, new_row: dict = None) -> DatatableAction:
+    def register_action(self, user, action: DatatableActionType, old_row: dict = None,
+                        new_row: dict = None) -> DatatableAction:
         """
         Register action committed on this Datatable to history
 

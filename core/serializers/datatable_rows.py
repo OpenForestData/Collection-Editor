@@ -9,11 +9,20 @@ from core.models import DatatableActionType, Datatable
 
 
 class DatatableRowsReadOnlySerializer(serializers.Serializer):
-    # Add Meta class for permissions
+    """
+    Serializer for datatable rows read only actions.
+    """
+
     class Meta:
         model = Datatable
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: Datatable):
+        """
+        Skips converting default fields as only specifically stored row should be returned by this serializer.
+
+        :param instance: Datatable to read rows from
+        :return: serialized values of instance fields
+        """
         ret = OrderedDict()
         for key, val in instance.items():
             ret[key] = str(val)
@@ -22,13 +31,24 @@ class DatatableRowsReadOnlySerializer(serializers.Serializer):
 
 
 class DatatableRowsSerializer(serializers.Serializer):
+    """
+    Serializer for datatable rows creation, edition and deletion
+    """
+
     # Add Meta class for permissions
     class Meta:
         model = Datatable
 
-    def is_valid(self, raise_exception=False):
-        result = super().is_valid()
-        if not self._validated_data:
+    def is_valid(self, raise_exception: bool = False) -> bool:
+        """
+        Validates if data passed to serializer contains at least one column value for a row.
+
+        :raise ValidationError: there is no column value in supplied parameters
+        :param raise_exception: switch raising exception during validation
+        :return: True if serializer is valid, False otherwise
+        """
+        result = super().is_valid(raise_exception)
+        if not self._validated_data and raise_exception:
             raise serializers.ValidationError(
                 {'non_field_errors': 'To create or patch a row at least one column has to be specified.'}
             )
@@ -36,13 +56,21 @@ class DatatableRowsSerializer(serializers.Serializer):
 
     @property
     def _writable_fields(self):
+        """
+        Yields Datatable columns as valid writable fields
+        """
         for column in self.instance.columns:
-            field = serializers.CharField(required=False)
+            field = serializers.CharField(required=False, allow_blank=True)
             field.field_name = column
             field.source_attrs = [column]
             yield field
 
-    def add_row(self):
+    def add_row(self) -> Datatable:
+        """
+        Adds row to datatable based on data supplied to serializer and logs this operation as DatatableAction instance.
+
+        :return: Datatable row was added to
+        """
         with transaction.atomic():
             row = self.instance.client.add_row(self.validated_data)
 
@@ -56,7 +84,14 @@ class DatatableRowsSerializer(serializers.Serializer):
             )
         return self.instance
 
-    def patch_row(self, row_id):
+    def patch_row(self, row_id: str):
+        """
+        Updates row in datatable based on data supplied to serializer and logs this operation as DatatableAction
+        instance.
+
+        :param row_id: BSON compliant id of row to be updated
+        :return: Datatable row was updated in
+        """
         with transaction.atomic():
             old_row = self.instance.client.get_rows({'_id': ObjectId(row_id)})[0]
             self.instance.client.patch_row(row_id, self.validated_data)
@@ -75,6 +110,13 @@ class DatatableRowsSerializer(serializers.Serializer):
             )
 
     def delete_row(self, row_id):
+        """
+        Deletes row from datatable based on data supplied to serializer and logs this operation as DatatableAction
+        instance.
+
+        :param row_id: BSON compliant id of row to be updated
+        :return: Datatable row was deleted from
+        """
         with transaction.atomic():
             old_row = self.instance.client.get_rows({'_id': ObjectId(row_id)})[0]
             self.instance.client.delete_row(row_id)

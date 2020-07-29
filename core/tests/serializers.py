@@ -1,11 +1,12 @@
 import os
 from unittest.mock import MagicMock
 
+from django.conf import settings
 from django.test import TestCase
 from requests import ConnectionError
 from rest_framework.exceptions import ValidationError
 
-from core.serializers import DatatableSerializer, DatatableExportSerializer, settings
+from core.serializers import DatatableSerializer, DatatableExportSerializer
 
 
 class DatatableSerializerTestCase(TestCase):

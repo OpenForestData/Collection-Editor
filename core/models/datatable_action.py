@@ -74,6 +74,9 @@ class DatatableAction(models.Model):
         self.reverted = True
         self.save(update_fields=['reverted'])
 
+    class Meta:
+        ordering = ['-created_at']
+
     # DRY Permissions
 
     @staticmethod
