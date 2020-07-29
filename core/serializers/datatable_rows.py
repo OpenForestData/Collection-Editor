@@ -25,7 +25,7 @@ class DatatableRowsReadOnlySerializer(serializers.Serializer):
         """
         ret = OrderedDict()
         for key, val in instance.items():
-            ret[key] = str(val)
+            ret[key] = str(val) if val else ''
 
         return ret
 
