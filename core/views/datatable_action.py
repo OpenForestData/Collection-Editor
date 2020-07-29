@@ -24,7 +24,7 @@ class DatatableActionViewSet(mixins.ListModelMixin,
         """
         Reverts Datatable action form history
 
-        .. http:post:: /datatable/history/revert/(int: datatableaction_id)/
+        .. http:post:: /datatable/history/(int: datatableaction_id)/revert
 
             :reqheader Authorization: optional Bearer (JWT) token to authenticate
             :statuscode 200: no error
