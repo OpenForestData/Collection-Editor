@@ -12,7 +12,6 @@ from django.contrib.postgres.fields import JSONField
 # Type imports for Docs
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models, transaction
-from django.utils.text import slugify
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
