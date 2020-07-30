@@ -28,7 +28,7 @@ class DatatableViewSet(MultiSerializerMixin,
 
     def retrieve(self, request, pk=None, **kwargs):
         """
-        Retrieves rows of selected datatable
+        Retrieves rows of selected datatable, and list of columns for this datatable
 
         .. http:get:: /datatable/(int:datatable_id)/
 
@@ -59,7 +59,10 @@ class DatatableViewSet(MultiSerializerMixin,
         page = pagination_class.paginate_queryset(mongo_cursor, request)
 
         serializer = self.get_serializer(page, many=True)
-        return pagination_class.get_paginated_response(serializer.data)
+        response = pagination_class.get_paginated_response(serializer.data)
+        response.data['columns'] = instance.columns
+
+        return response
 
     @action(detail=True, methods=['POST'], url_path='row', url_name='add-row')
     def add_row(self, request, pk=None, **kwargs):

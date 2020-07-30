@@ -15,6 +15,8 @@ class DatatableRowsReadOnlySerializer(serializers.Serializer):
 
     class Meta:
         model = Datatable
+        fields = ('columns',)
+        read_only_fields = fields
 
     def to_representation(self, instance: Datatable):
         """
@@ -23,7 +25,9 @@ class DatatableRowsReadOnlySerializer(serializers.Serializer):
         :param instance: Datatable to read rows from
         :return: serialized values of instance fields
         """
-        ret = OrderedDict()
+
+        ret = super().to_representation(instance)
+
         for key, val in instance.items():
             ret[key] = str(val) if val else ''
 

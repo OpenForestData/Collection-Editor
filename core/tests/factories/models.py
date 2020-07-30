@@ -12,10 +12,9 @@ class DatatableFactory(factory.DjangoModelFactory):
 
     title = factory.Faker('word')
     collection_name = factory.Sequence(lambda n: f'datatable_{n}')
-    columns = {
-        str(col_type.__name__).capitalize(): col_type for
-        col_type in [str, int, float, complex, bool]
-    }
+    columns = [
+        f'column_{i}' for i in range(5)
+    ]
 
 
 class UserFactory(factory.DjangoModelFactory):
