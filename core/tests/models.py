@@ -35,7 +35,7 @@ class DatatableTestCase(TestCase):
                    'column_3': float,
                    'column_4': complex,
                    'column_5': bool}
-        instance = DatatableFactory.build(columns=columns, collection_name=None)
+        instance = DatatableFactory.build(columns=columns)
         instance.save()
 
         self.assertEqual(list(instance.columns.values()), ['str', 'int', 'float', 'complex', 'bool'])

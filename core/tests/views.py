@@ -155,6 +155,7 @@ class DatatableViewSetTestCase(APITestCase):
         self_path = os.path.dirname(core.__file__)
         with open(os.path.join(self_path, 'tests/data_samples/csv.csv'), 'rb') as csv_file:
             response = self.client.post(url, data={'title': 'TestDatatable',
+                                                   'collection_name': 'TestDatatable',
                                                    'file': csv_file}, format='multipart')
 
             self.assertEqual(response.status_code, 201, msg=response.data)
