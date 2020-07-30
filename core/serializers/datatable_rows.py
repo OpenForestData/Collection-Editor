@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from copy import deepcopy
 
 from bson import ObjectId
