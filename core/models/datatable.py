@@ -188,7 +188,7 @@ class Datatable(models.Model):
     title = models.CharField(max_length=255)
 
     #: Name of database table containing datatable rows (has to be unique)
-    collection_name = models.CharField(max_length=255, unique=True, blank=True)
+    collection_name = models.CharField(max_length=255, unique=True)
 
     #: Mapping of valid column names and their types
     columns = JSONField(blank=True, null=True)
@@ -197,8 +197,6 @@ class Datatable(models.Model):
         """
         Saves Datatable metadata to database
         """
-        if not self.collection_name:
-            self.collection_name = slugify(self.title)
         self.__set_database_client()
         self.__serialize_type()
         super().save(*args, **kwargs)
