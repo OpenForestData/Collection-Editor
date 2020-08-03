@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 from abc import ABC, abstractmethod
 from io import StringIO, BytesIO
@@ -152,8 +153,10 @@ class DatatableMongoClient(DatatableClient):
 
         if file_type == 'csv':
             # CSV can be loaded in chunks
+            delimiter = self.__get_csv_delimiter(file)
+
             chunk = None
-            for chunk in pd.read_csv(in_memory_file, chunksize=2048, sep=';'):
+            for chunk in pd.read_csv(in_memory_file, chunksize=2048, sep=delimiter):
                 payload = json.loads(chunk.to_json(orient='records', date_format='iso'))
                 self.collection.insert_many(payload)
             self.columns = list(chunk.columns)
@@ -161,6 +164,14 @@ class DatatableMongoClient(DatatableClient):
             loaded_file = pd.read_excel(in_memory_file)
             self.collection.insert_many(json.loads(loaded_file.to_json(orient='records', date_format='iso')))
             self.columns = list(loaded_file.columns)
+
+    @staticmethod
+    def __get_csv_delimiter(file):
+        file.file.seek(0)
+        chunk = file.file.readline().decode('utf-8')
+        file.file.seek(0)
+
+        return csv.Sniffer().sniff(chunk).delimiter
 
 
 class Datatable(models.Model):
