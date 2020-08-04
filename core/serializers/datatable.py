@@ -56,7 +56,7 @@ class DatatableSerializer(serializers.ModelSerializer):
             file.file.seek(0)
 
             if not chunk:
-                raise serializers.ValidationError(f'File can\'t be empty')
+                raise serializers.ValidationError('File can\'t be empty')
 
             try:
                 dialect = csv.Sniffer().sniff(chunk)
