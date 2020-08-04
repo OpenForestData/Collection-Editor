@@ -1,6 +1,7 @@
 import csv
 import mimetypes
 import os
+from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
@@ -139,14 +140,15 @@ class DatatableExportSerializer(serializers.ModelSerializer):
         # Create temp directory if doesn't exist
         Path(settings.TMP_MEDIA_PATH).mkdir(parents=True, exist_ok=True)
 
-        tmp_file_name = os.path.join(settings.TMP_MEDIA_PATH, self.instance.title + '.csv')
+        identifier = self.validated_data['dataset_pid']
+
+        tmp_file_name = os.path.join(settings.TMP_MEDIA_PATH, self.instance.title + str(datetime.now()) + '.csv')
         try:
             with open(tmp_file_name, 'w') as file:
                 dict_writer = csv.DictWriter(file, ['_id', *self.instance.columns])
                 dict_writer.writeheader()
                 dict_writer.writerows(cursor)
 
-            identifier = self.validated_data['dataset_pid']
             result = self.client.upload_file(identifier, tmp_file_name)
             if result['status'] == 'OK':
                 result = self.client.publish_dataset(identifier, type='major')
