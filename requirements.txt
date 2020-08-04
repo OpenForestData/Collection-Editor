@@ -1,19 +1,19 @@
-Django==2.2.13
-djangorestframework==3.11.0
+Django==2.2.*
+djangorestframework==3.11.*
 
-django-filter==2.3.0
-djangorestframework-simplejwt==4.4.0
-dry-rest-permissions==0.1.10
-gunicorn==20.0.4
-python-dotenv==0.13.0
-pymongo~=3.10.1
-pandas~=1.0.5
-psycopg2-binary==2.8.5
-xlrd==1.2.0
+django-filter==2.3.*
+djangorestframework-simplejwt==4.4.*
+dry-rest-permissions==0.1.*
+gunicorn==20.0.*
+python-dotenv==0.13.*
+pymongo~=3.10.*
+pandas~=1.0.*
+psycopg2-binary==2.8.*
+xlrd==1.2.*
 
-python-ldap==3.3.1
-django-auth-ldap==2.2.0
+python-ldap==3.3.*
+django-auth-ldap==2.2.*
 
-django-cors-headers==3.4.0
+django-cors-headers==3.4.*
 
 pyDatavers@git+https://gitlab.whiteaster.com/public_data/pydataverse-upgrade.git  #egg=pyDatavers

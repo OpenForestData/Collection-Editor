@@ -1,10 +1,10 @@
 import csv
+import mimetypes
 import os
 from io import StringIO
-
-import pandas as pd
 from pathlib import Path
 
+import pandas as pd
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
@@ -45,7 +45,10 @@ class DatatableSerializer(serializers.ModelSerializer):
         :param file: uploaded file
         :return: validated file
         """
-        if file.content_type not in settings.SUPPORTED_MIME_TYPES:
+        guessed_content_type = mimetypes.guess_type(file.name)
+
+        if file.content_type not in settings.SUPPORTED_MIME_TYPES or \
+                guessed_content_type not in settings.SUPPORTED_MIME_TYPES:
             raise serializers.ValidationError(f'Unsupported file type. File is of type {file.content_type}')
 
         if settings.SUPPORTED_MIME_TYPES[file.content_type] == 'csv':
@@ -58,8 +61,8 @@ class DatatableSerializer(serializers.ModelSerializer):
             try:
                 dialect = csv.Sniffer().sniff(chunk)
 
-            except csv.Error as e:
-                raise serializers.ValidationError(f'CSV delimiter can\'t be determined')
+            except csv.Error:
+                raise serializers.ValidationError('CSV delimiter can\'t be determined')
 
             try:
                 for _ in pd.read_csv(StringIO(file.file.read().decode('utf-8')), chunksize=2048, sep=dialect.delimiter):
