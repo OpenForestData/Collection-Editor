@@ -6,4 +6,4 @@
 python /app/manage.py migrate
 python /app/manage.py collectstatic --noinput
 python /app/manage.py loaddata initial_groups.json
-/usr/local/bin/gunicorn collection_editor.wsgi --log-level debug -b 0.0.0.0:8000
+/usr/local/bin/gunicorn collection_editor.wsgi -b 0.0.0.0:8000
