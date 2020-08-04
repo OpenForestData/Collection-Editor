@@ -1,4 +1,5 @@
 import csv
+import json
 import mimetypes
 import os
 from datetime import datetime
@@ -142,7 +143,7 @@ class DatatableExportSerializer(serializers.ModelSerializer):
 
         identifier = self.validated_data['dataset_pid']
 
-        tmp_file_name = os.path.join(settings.TMP_MEDIA_PATH, self.instance.title + str(datetime.now()) + '.csv')
+        tmp_file_name = os.path.join(settings.TMP_MEDIA_PATH, f'{self.instance.title}.csv')
         try:
             with open(tmp_file_name, 'w') as file:
                 dict_writer = csv.DictWriter(file, ['_id', *self.instance.columns])
@@ -151,7 +152,11 @@ class DatatableExportSerializer(serializers.ModelSerializer):
 
             result = self.client.upload_file(identifier, tmp_file_name)
             if result['status'] == 'OK':
-                result = self.client.publish_dataset(identifier, type='major')
+                publish_result = self.client.publish_dataset(identifier, type='major')
+                result = {
+                    'status': publish_result.reason,
+                    'message': 'Data successfully uploaded and published'
+                }
         finally:
             os.remove(tmp_file_name)
 
