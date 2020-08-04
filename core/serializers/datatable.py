@@ -139,7 +139,7 @@ class DatatableExportSerializer(serializers.ModelSerializer):
         tmp_file_name = os.path.join(settings.TMP_MEDIA_PATH, self.instance.title + '.csv')
         try:
             with open(tmp_file_name, 'w') as file:
-                dict_writer = csv.DictWriter(file, ['_id', *self.instance.columns.keys()])
+                dict_writer = csv.DictWriter(file, ['_id', *self.instance.columns])
                 dict_writer.writeheader()
                 dict_writer.writerows(cursor)
 
