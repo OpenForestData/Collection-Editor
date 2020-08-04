@@ -243,6 +243,9 @@ class Datatable(models.Model):
     def __repr__(self):
         return str(self)
 
+    class Meta:
+        ordering = ['-id']
+
     # DRY Permissions
 
     @staticmethod
