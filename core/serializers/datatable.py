@@ -48,7 +48,7 @@ class DatatableSerializer(serializers.ModelSerializer):
         guessed_content_type = mimetypes.guess_type(file.name)
 
         if file.content_type not in settings.SUPPORTED_MIME_TYPES or \
-                guessed_content_type not in settings.SUPPORTED_MIME_TYPES:
+                guessed_content_type[0] not in settings.SUPPORTED_MIME_TYPES:
             raise serializers.ValidationError(f'Unsupported file type. File is of type {file.content_type}')
 
         if settings.SUPPORTED_MIME_TYPES[file.content_type] == 'csv':
