@@ -1,6 +1,7 @@
 import csv
 import mimetypes
 import os
+from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
@@ -10,8 +11,9 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 from pyDataverse.api import Api
 from pymongo.cursor import Cursor
-from requests import ConnectionError
+from requests import ConnectionError, Response
 from rest_framework import serializers
+from slugify import slugify
 
 from core.models import Datatable
 
@@ -141,21 +143,36 @@ class DatatableExportSerializer(serializers.ModelSerializer):
 
         identifier = self.validated_data['dataset_pid']
 
-        tmp_file_name = os.path.join(settings.TMP_MEDIA_PATH, f'{self.instance.title}.csv')
+        tmp_file_name = os.path.join(settings.TMP_MEDIA_PATH,
+                                     f'{slugify(self.instance.title)}-{datetime.now().timestamp()}.csv')
         try:
             with open(tmp_file_name, 'w') as file:
                 dict_writer = csv.DictWriter(file, ['_id', *self.instance.columns])
                 dict_writer.writeheader()
                 dict_writer.writerows(cursor)
 
-            result = self.client.upload_file(identifier, tmp_file_name)
-            if result['status'] == 'OK':
-                publish_result = self.client.publish_dataset(identifier, type='major')
-                result = {
-                    'status': publish_result.reason,
-                    'message': 'Data successfully uploaded and published'
-                }
+            result = self._upload_file(self.client, tmp_file_name, identifier)
+            if result.ok:
+                result = self.client.publish_dataset(identifier, type='major')
         finally:
             os.remove(tmp_file_name)
 
         return result
+
+    @staticmethod
+    def _upload_file(client: Api, filename: str, identifier: str) -> Response:
+        """
+        Function overwriting faulty client upload file function
+
+        :param client: pyDataverse Client
+        :param filename: name of file to be uploaded
+        :param identifier: DOI of Dataset to which file should be uploaded
+        :return: Response from dataverse
+        """
+        url = client.native_api_base_url[:-3]
+        url += "/datasets/:persistentId/add?persistentId={0}".format(identifier)
+
+        files = {"file": open(filename, "rb")}
+        return client.post_request(
+            files=files, auth=True, url=url
+        )

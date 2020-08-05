@@ -16,4 +16,6 @@ django-auth-ldap~=2.2.0
 
 django-cors-headers~=3.4.0
 
+python-slugify~=4.0.1
+
 pyDatavers@git+https://gitlab.whiteaster.com/public_data/pydataverse-upgrade.git  #egg=pyDatavers
