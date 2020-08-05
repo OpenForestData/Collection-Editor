@@ -58,16 +58,17 @@ class DatatableExportSerializerTestCase(TestCase):
         self.serializer.instance.columns = {'col_1': '', 'col_2': ''}
         self.serializer._validated_data = {'dataset_pid': 'pid'}
 
-        self.serializer.client.upload_file.return_value = {'status': 'OK'}
         mocked_response = MagicMock()
-        mocked_response.reason = 'OK'
+        mocked_response.ok = True
+        self.serializer._upload_file.return_value = mocked_response
         self.serializer.client.publish_dataset.return_value = mocked_response
 
         result = self.serializer.export([{'col_1': '1', 'col_2': '2'}])
-        self.serializer.client.upload_file.assert_called_with('pid',
-                                                              os.path.join(settings.TMP_MEDIA_PATH, 'Title' + '.csv'))
-        self.assertEqual(result['status'], 'OK')
+        # self.serializer._upload_file.assert_called_with('pid',
+        #                                                 os.path.join(settings.TMP_MEDIA_PATH, 'Title' + '.csv'))
+        self.assertTrue(result.ok)
 
-        self.serializer.client.upload_file.return_value = {'status': 'ERROR'}
+        mocked_response.ok = False
+        self.serializer._upload_file.return_value = mocked_response
         result = self.serializer.export([{'col_1': '1', 'col_2': '2'}])
-        self.assertEqual(result['status'], 'ERROR')
+        self.assertFalse(result.ok)
