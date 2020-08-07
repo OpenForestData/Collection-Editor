@@ -11,7 +11,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 from pyDataverse.api import Api
 from pymongo.cursor import Cursor
-from requests import ConnectionError, Response
+from requests import ConnectionError
 from rest_framework import serializers
 from slugify import slugify
 
@@ -151,16 +151,20 @@ class DatatableExportSerializer(serializers.ModelSerializer):
                 dict_writer.writeheader()
                 dict_writer.writerows(cursor)
 
-            result = self._upload_file(self.client, tmp_file_name, identifier)
-            if result.ok:
-                result = self.client.publish_dataset(identifier, type='major')
+            response = self._upload_file(self.client, tmp_file_name, identifier)
+            parsed_response = {'status': response.status_code,
+                               'content': None}
+            if response.status_code != 200:
+                content = {'dataset_pid': [response.content.decode(response.encoding or 'utf-8').split('"')[-2]]}
+                parsed_response['content'] = content
+
         finally:
             os.remove(tmp_file_name)
 
-        return result
+        return parsed_response
 
     @staticmethod
-    def _upload_file(client: Api, filename: str, identifier: str) -> Response:
+    def _upload_file(client: Api, filename: str, identifier: str):
         """
         Function overwriting faulty client upload file function
 

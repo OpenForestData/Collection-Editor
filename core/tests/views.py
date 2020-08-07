@@ -134,9 +134,10 @@ class DatatableViewSetTestCase(APITestCase):
         mock_serializer = MagicMock()
         mock_serializer.is_valid.return_value = True
 
-        mock_response = Response()
-        mock_response.raw = BytesIO(b'Test')
-        mock_response.status_code = 200
+        mock_response = {
+            'status': 200,
+            'content': BytesIO(b'Test')
+        }
 
         mock_serializer.export.return_value = mock_response
         mock_get_serializer.return_value = mock_serializer

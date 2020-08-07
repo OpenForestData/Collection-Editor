@@ -183,7 +183,7 @@ class DatatableViewSet(MultiSerializerMixin,
 
         serializer = self.get_serializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
-        export_result = serializer.export(mongo_cursor)
-        return Response(export_result,
-                        status=status.HTTP_200_OK if export_result.ok
+        export_response = serializer.export(mongo_cursor)
+        return Response(export_response['content'],
+                        status=status.HTTP_200_OK if export_response['status'] == 200
                         else status.HTTP_400_BAD_REQUEST)
