@@ -3,9 +3,11 @@ from __future__ import annotations
 import csv
 import json
 from abc import ABC, abstractmethod
+from datetime import datetime
 from io import StringIO, BytesIO
 from typing import Type
 
+import numpy
 import pandas as pd
 from bson import ObjectId
 from django.conf import settings
@@ -162,6 +164,11 @@ class DatatableMongoClient(DatatableClient):
             self.columns = list(chunk.columns)
         else:  # file_type == 'excel'
             loaded_file = pd.read_excel(in_memory_file)
+            columns = self.__get_string_converter_for_datetime_columns(loaded_file)
+            for column in columns:
+                if self.__if_date_column(loaded_file[column]):
+                    loaded_file[column] = loaded_file[column].dt.strftime('%Y-%m-%d')
+
             self.collection.insert_many(json.loads(loaded_file.to_json(orient='records', date_format='iso')))
             self.columns = list(loaded_file.columns)
 
@@ -172,6 +179,15 @@ class DatatableMongoClient(DatatableClient):
         file.file.seek(0)
 
         return csv.Sniffer().sniff(chunk).delimiter
+
+    @staticmethod
+    def __if_date_column(column):
+        zero_time = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).time()
+        return all(list(map(lambda x: x.time() == zero_time, column)))
+
+    @staticmethod
+    def __get_string_converter_for_datetime_columns(df: pd.Dataframe):
+        return list(df.columns[df.dtypes == numpy.dtype(numpy.datetime64('2000-01-01T00:00:00.000000000'))])
 
 
 class Datatable(models.Model):
