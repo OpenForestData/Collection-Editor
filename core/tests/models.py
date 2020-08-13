@@ -131,8 +131,8 @@ class DatatableMongoClientTestCase(TestCase):
 
             self.instance.upload_file_to_db(file)
         self.instance.collection.insert_many.assert_called_with(
-            [{'str_col': 'str_1', 'int_col': 1, 'date_col': '2020-01-01T00:00:00.000Z'},
-             {'str_col': 'str_2', 'int_col': 2, 'date_col': '2020-01-08T00:00:00.000Z'}])
+            [{'str_col': 'str_1', 'int_col': 1, 'date_col': '2020-01-01'},
+             {'str_col': 'str_2', 'int_col': 2, 'date_col': '2020-01-08'}])
 
     def test_upload_file_to_db_wrong_filetype(self):
         file = Mock()
