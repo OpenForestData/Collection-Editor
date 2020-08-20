@@ -1,7 +1,5 @@
-import os
 from unittest.mock import MagicMock
 
-from django.conf import settings
 from django.test import TestCase
 from requests import ConnectionError
 from rest_framework.exceptions import ValidationError
@@ -58,14 +56,20 @@ class DatatableExportSerializerTestCase(TestCase):
         self.serializer.instance.columns = {'col_1': '', 'col_2': ''}
         self.serializer._validated_data = {'dataset_pid': 'pid'}
 
-        self.serializer.client.upload_file.return_value = {'status': 'OK'}
-        self.serializer.client.publish_dataset.return_value = {'status': 'OK'}
+        mocked_response = MagicMock()
+        mocked_response.status_code = 200
+        mocked_response.content = b'{"status":"OK", "message":"Test message"}'
+
+        self.serializer.client.post_request.return_value = mocked_response
 
         result = self.serializer.export([{'col_1': '1', 'col_2': '2'}])
-        self.serializer.client.upload_file.assert_called_with('pid',
-                                                              os.path.join(settings.TMP_MEDIA_PATH, 'Title' + '.csv'))
-        self.assertEqual(result['status'], 'OK')
+        self.assertEqual(result['status'], 200)
 
-        self.serializer.client.upload_file.return_value = {'status': 'ERROR'}
+        mocked_response.status_code = 400
+        mocked_response.content = b'{"status":"ERROR", "message":"Test message"}'
+        mocked_response.encoding = 'utf-8'
+        self.serializer.client.post_request.return_value = mocked_response
         result = self.serializer.export([{'col_1': '1', 'col_2': '2'}])
-        self.assertEqual(result['status'], 'ERROR')
+
+        self.assertEqual(result['status'], 400)
+        self.assertEqual(result['content'], {'dataset_pid': ['Test message']})

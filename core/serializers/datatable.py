@@ -1,7 +1,11 @@
 import csv
+import mimetypes
 import os
+from datetime import datetime
+from io import StringIO
 from pathlib import Path
 
+import pandas as pd
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
@@ -9,6 +13,7 @@ from pyDataverse.api import Api
 from pymongo.cursor import Cursor
 from requests import ConnectionError
 from rest_framework import serializers
+from slugify import slugify
 
 from core.models import Datatable
 
@@ -17,6 +22,7 @@ class DatatableReadOnlySerializer(serializers.ModelSerializer):
     """
     Datatable serializer for read-only operations
     """
+
     class Meta:
         model = Datatable
         fields = ['id', 'title', 'collection_name']
@@ -41,8 +47,32 @@ class DatatableSerializer(serializers.ModelSerializer):
         :param file: uploaded file
         :return: validated file
         """
-        if file.content_type not in settings.SUPPORTED_MIME_TYPES:
+        guessed_content_type = mimetypes.guess_type(file.name)
+
+        if file.content_type not in settings.SUPPORTED_MIME_TYPES or \
+                guessed_content_type[0] not in settings.SUPPORTED_MIME_TYPES:
             raise serializers.ValidationError(f'Unsupported file type. File is of type {file.content_type}')
+
+        if settings.SUPPORTED_MIME_TYPES[file.content_type] == 'csv':
+            chunk = file.file.readline().decode('utf-8')
+            file.file.seek(0)
+
+            if not chunk:
+                raise serializers.ValidationError('File can\'t be empty')
+
+            try:
+                dialect = csv.Sniffer().sniff(chunk)
+
+            except csv.Error:
+                raise serializers.ValidationError('CSV delimiter can\'t be determined')
+
+            try:
+                for _ in pd.read_csv(StringIO(file.file.read().decode('utf-8')), chunksize=2048, sep=dialect.delimiter):
+                    pass
+            except pd.errors.ParserError as e:
+                raise serializers.ValidationError(f'CSV file is corrupted. {e}')
+
+            file.file.seek(0)
         return file
 
     def create(self, validated_data):
@@ -111,18 +141,42 @@ class DatatableExportSerializer(serializers.ModelSerializer):
         # Create temp directory if doesn't exist
         Path(settings.TMP_MEDIA_PATH).mkdir(parents=True, exist_ok=True)
 
-        tmp_file_name = os.path.join(settings.TMP_MEDIA_PATH, self.instance.title + '.csv')
+        identifier = self.validated_data['dataset_pid']
+
+        tmp_file_name = os.path.join(settings.TMP_MEDIA_PATH,
+                                     f'{slugify(self.instance.title)}-{datetime.now().timestamp()}.csv')
         try:
             with open(tmp_file_name, 'w') as file:
-                dict_writer = csv.DictWriter(file, ['_id', *self.instance.columns.keys()])
+                dict_writer = csv.DictWriter(file, ['_id', *self.instance.columns])
                 dict_writer.writeheader()
                 dict_writer.writerows(cursor)
 
-            identifier = self.validated_data['dataset_pid']
-            result = self.client.upload_file(identifier, tmp_file_name)
-            if result['status'] == 'OK':
-                result = self.client.publish_dataset(identifier, type='major')
+            response = self._upload_file(self.client, tmp_file_name, identifier)
+            parsed_response = {'status': response.status_code,
+                               'content': None}
+            if response.status_code != 200:
+                content = {'dataset_pid': [response.content.decode(response.encoding or 'utf-8').split('"')[-2]]}
+                parsed_response['content'] = content
+
         finally:
             os.remove(tmp_file_name)
 
-        return result
+        return parsed_response
+
+    @staticmethod
+    def _upload_file(client: Api, filename: str, identifier: str):
+        """
+        Function overwriting faulty client upload file function
+
+        :param client: pyDataverse Client
+        :param filename: name of file to be uploaded
+        :param identifier: DOI of Dataset to which file should be uploaded
+        :return: Response from dataverse
+        """
+        url = client.native_api_base_url[:-3]
+        url += "/datasets/:persistentId/add?persistentId={0}".format(identifier)
+
+        files = {"file": open(filename, "rb")}
+        return client.post_request(
+            files=files, auth=True, url=url
+        )

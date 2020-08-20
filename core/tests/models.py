@@ -8,7 +8,7 @@ from django.test import TestCase
 
 import core
 from core.exceptions import WrongFileType, WrongAction
-from core.models import Datatable, DatatableActionType, DatatableAction
+from core.models import DatatableActionType, DatatableAction
 from core.models.datatable import DatatableMongoClient
 from core.tests.factories.models import DatatableFactory, DatatableActionFactory
 from core.tests.mocks import MockCollection, MockClient
@@ -24,37 +24,6 @@ class DatatableTestCase(TestCase):
         super().setUpClass()
 
         cls.user = User.objects.create_user(username='Test')
-
-    def test_save(self):
-        """
-        Tests if during save column types are serialized properly, proper DB client is assigned to object
-        and title is slugified into collection_name
-        """
-        columns = {'column_1': str,
-                   'column_2': int,
-                   'column_3': float,
-                   'column_4': complex,
-                   'column_5': bool}
-        instance = DatatableFactory.build(columns=columns, collection_name=None)
-        instance.save()
-
-        self.assertEqual(list(instance.columns.values()), ['str', 'int', 'float', 'complex', 'bool'])
-        self.assertEqual(type(instance.client), DatatableMongoClient)
-
-    def test_from_db(self):
-        """
-        Tests if column types deserialize correctly and proper DB client is assigned to object
-        """
-        columns = {'column_1': str,
-                   'column_2': int,
-                   'column_3': float,
-                   'column_4': complex,
-                   'column_5': bool}
-        instance_pk = DatatableFactory(columns=columns).pk
-        instance = Datatable.objects.get(pk=instance_pk)
-
-        self.assertEqual(list(instance.columns.values()), [str, int, float, complex, bool])
-        self.assertEqual(type(instance.client), DatatableMongoClient)
 
     def test_upload_datatable_file(self):
         """
@@ -162,8 +131,8 @@ class DatatableMongoClientTestCase(TestCase):
 
             self.instance.upload_file_to_db(file)
         self.instance.collection.insert_many.assert_called_with(
-            [{'str_col': 'str_1', 'int_col': 1, 'date_col': '2020-01-01T00:00:00.000Z'},
-             {'str_col': 'str_2', 'int_col': 2, 'date_col': '2020-01-08T00:00:00.000Z'}])
+            [{'str_col': 'str_1', 'int_col': 1, 'date_col': '2020-01-01'},
+             {'str_col': 'str_2', 'int_col': 2, 'date_col': '2020-01-08'}])
 
     def test_upload_file_to_db_wrong_filetype(self):
         file = Mock()

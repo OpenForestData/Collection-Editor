@@ -1,18 +1,20 @@
 from __future__ import annotations
 
+import csv
 import json
 from abc import ABC, abstractmethod
+from datetime import datetime
 from io import StringIO, BytesIO
 from typing import Type
 
+import numpy
 import pandas as pd
 from bson import ObjectId
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import ArrayField
 # Type imports for Docs
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models, transaction
-from django.utils.text import slugify
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
@@ -78,7 +80,7 @@ class DatatableMongoClient(DatatableClient):
             connect=True
         )[settings.MONGO_DATABASE]
         self.collection: Collection = db[collection_name]
-        self.columns = {}
+        self.columns = []
 
     def get_rows(self, query: dict = None) -> Cursor:
         """
@@ -153,30 +155,39 @@ class DatatableMongoClient(DatatableClient):
 
         if file_type == 'csv':
             # CSV can be loaded in chunks
+            delimiter = self.__get_csv_delimiter(file)
+
             chunk = None
-            for chunk in pd.read_csv(in_memory_file, chunksize=2048, sep=';'):
+            for chunk in pd.read_csv(in_memory_file, chunksize=2048, sep=delimiter):
                 payload = json.loads(chunk.to_json(orient='records', date_format='iso'))
                 self.collection.insert_many(payload)
-            self.columns = self.__get_column_types(chunk)
+            self.columns = list(chunk.columns)
         else:  # file_type == 'excel'
             loaded_file = pd.read_excel(in_memory_file)
-            self.collection.insert_many(json.loads(loaded_file.to_json(orient='records', date_format='iso')))
-            self.columns = self.__get_column_types(loaded_file)
+            columns = self.__get_string_converter_for_datetime_columns(loaded_file)
+            for column in columns:
+                if self.__if_date_column(loaded_file[column]):
+                    loaded_file[column] = loaded_file[column].dt.strftime('%Y-%m-%d')
 
-    def __get_column_types(self, table: pd.DataFrame):
-        column_types = {}
-        for column in table.columns:
-            cell_value = table.iloc[0][column]
-            try:
-                column_types[column] = type(cell_value.item())
-            except AttributeError:
-                # cell value is not of a numpy dtype
-                # serializing supports only native values
-                if not type(cell_value) in [str, int, float, complex, bool]:
-                    column_types[column] = str
-                else:
-                    column_types[column] = type(cell_value)
-        return column_types
+            self.collection.insert_many(json.loads(loaded_file.to_json(orient='records', date_format='iso')))
+            self.columns = list(loaded_file.columns)
+
+    @staticmethod
+    def __get_csv_delimiter(file):
+        file.file.seek(0)
+        chunk = file.file.readline().decode('utf-8')
+        file.file.seek(0)
+
+        return csv.Sniffer().sniff(chunk).delimiter
+
+    @staticmethod
+    def __if_date_column(column):
+        zero_time = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).time()
+        return all(list(map(lambda x: x.time() == zero_time, column)))
+
+    @staticmethod
+    def __get_string_converter_for_datetime_columns(df: pd.Dataframe):
+        return list(df.columns[df.dtypes == numpy.dtype(numpy.datetime64('2000-01-01T00:00:00.000000000'))])
 
 
 class Datatable(models.Model):
@@ -188,19 +199,16 @@ class Datatable(models.Model):
     title = models.CharField(max_length=255)
 
     #: Name of database table containing datatable rows (has to be unique)
-    collection_name = models.CharField(max_length=255, unique=True, blank=True)
+    collection_name = models.CharField(max_length=255, unique=True)
 
-    #: Mapping of valid column names and their types
-    columns = JSONField(blank=True, null=True)
+    #: List of existing column names
+    columns = ArrayField(models.TextField(blank=True), blank=True, null=True)
 
     def save(self, *args, **kwargs):
         """
         Saves Datatable metadata to database
         """
-        if not self.collection_name:
-            self.collection_name = slugify(self.title)
         self.__set_database_client()
-        self.__serialize_type()
         super().save(*args, **kwargs)
 
     @classmethod
@@ -212,7 +220,6 @@ class Datatable(models.Model):
         """
         instance: Datatable = super().from_db(db, field_names, values)
         instance.__set_database_client()
-        instance.__deserialize_type()
         return instance
 
     def upload_datatable_file(self, file: InMemoryUploadedFile):
@@ -246,28 +253,14 @@ class Datatable(models.Model):
         """
         self.client = client(self.collection_name)
 
-    def __serialize_type(self):
-        """
-        Serializes python native types -> strings
-        """
-        if self.columns:
-            for column, col_type in self.columns.items():
-                if type(col_type) == type:
-                    self.columns[column] = str(col_type.__name__)
-
-    def __deserialize_type(self):
-        """
-        Deserializes strings -> python native types
-        """
-        if self.columns:
-            for column, col_type in self.columns.items():
-                self.columns[column] = eval(col_type)
-
     def __str__(self):
         return self.title
 
     def __repr__(self):
         return str(self)
+
+    class Meta:
+        ordering = ['-id']
 
     # DRY Permissions
 

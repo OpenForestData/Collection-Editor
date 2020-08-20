@@ -28,7 +28,7 @@ class DatatableViewSet(MultiSerializerMixin,
 
     def retrieve(self, request, pk=None, **kwargs):
         """
-        Retrieves rows of selected datatable
+        Retrieves rows of selected datatable, and list of columns for this datatable
 
         .. http:get:: /datatable/(int:datatable_id)/
 
@@ -59,7 +59,10 @@ class DatatableViewSet(MultiSerializerMixin,
         page = pagination_class.paginate_queryset(mongo_cursor, request)
 
         serializer = self.get_serializer(page, many=True)
-        return pagination_class.get_paginated_response(serializer.data)
+        response = pagination_class.get_paginated_response(serializer.data)
+        response.data['columns'] = instance.columns
+
+        return response
 
     @action(detail=True, methods=['POST'], url_path='row', url_name='add-row')
     def add_row(self, request, pk=None, **kwargs):
@@ -180,7 +183,7 @@ class DatatableViewSet(MultiSerializerMixin,
 
         serializer = self.get_serializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
-        export_result = serializer.export(mongo_cursor)
-        return Response(export_result,
-                        status=status.HTTP_200_OK if export_result['status'] == 'OK'
+        export_response = serializer.export(mongo_cursor)
+        return Response(export_response['content'],
+                        status=status.HTTP_200_OK if export_response['status'] == 200
                         else status.HTTP_400_BAD_REQUEST)

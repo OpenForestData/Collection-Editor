@@ -1,10 +1,12 @@
 import os
+from io import BytesIO
 from unittest.mock import Mock, patch, MagicMock
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.urls import reverse
+from requests import Response
 from rest_framework.test import APITestCase
 
 import core
@@ -128,10 +130,16 @@ class DatatableViewSetTestCase(APITestCase):
         self.assertEqual(new_row['int_col'], '15')
 
     @patch('core.views.DatatableViewSet.get_serializer')
-    def test_export(self, mock_get_serializer):
+    def test_export_endpoint(self, mock_get_serializer):
         mock_serializer = MagicMock()
         mock_serializer.is_valid.return_value = True
-        mock_serializer.export.return_value = {'status': 'OK'}
+
+        mock_response = {
+            'status': 200,
+            'content': BytesIO(b'Test')
+        }
+
+        mock_serializer.export.return_value = mock_response
         mock_get_serializer.return_value = mock_serializer
 
         url = reverse('datatable-export', kwargs={'pk': self.datatable.pk})
@@ -155,6 +163,7 @@ class DatatableViewSetTestCase(APITestCase):
         self_path = os.path.dirname(core.__file__)
         with open(os.path.join(self_path, 'tests/data_samples/csv.csv'), 'rb') as csv_file:
             response = self.client.post(url, data={'title': 'TestDatatable',
+                                                   'collection_name': 'TestDatatable',
                                                    'file': csv_file}, format='multipart')
 
             self.assertEqual(response.status_code, 201, msg=response.data)
