@@ -15,17 +15,17 @@ Django default database
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 - ``DB_NAME`` - general Django database name. (Default: collection_editor)
-- ``DB_USER`` - username for database.  (Default: ce_user)
-- ``DB_PASSWORD`` - password for database user. (Default: ce_password)
 - ``DB_HOST`` - host address for database. (Default: ce_db)
+- ``DB_USER`` - username for database. (Default: ce_user)
+- ``DB_PASSWORD`` - password for database user. (Default: ce_password)
 
 Datable storage database
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-- ``MONGO_DATABASE`` - datatables designated Django database name (Default: collection_editor)
-- ``MONGO_HOST`` - ... (Default: ce_mongo)
-- ``MONGO_USER`` - ... (Default: ce_user)
-- ``MONGO_PASSWORD`` - ... (Default: ce_password)
+- ``MONGO_DATABASE`` - datatables designated Django database name, should be MongoDB database (Default: collection_editor)
+- ``MONGO_HOST`` - host address for MongoDB database. (Default: ce_mongo)
+- ``MONGO_USER`` - username for MongoDB database. (Default: ce_user)
+- ``MONGO_PASSWORD`` - password for MongoDB database user. (Default: ce_password)
 
 LDAP
 ^^^^
