@@ -6,7 +6,7 @@ class MongoCursorLimitOffsetPagination(LimitOffsetPagination):
     """
     Paginator for MongoDB Cursor build on DRF pagination
     """
-    max_limit = 1000
+    max_limit = 100000
 
     def paginate_queryset(self, cursor: Cursor, request, view=None) -> list:
         """
