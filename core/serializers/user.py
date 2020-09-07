@@ -16,4 +16,3 @@ class MinimalUserSerializer(serializers.ModelSerializer):
 
     def get_groups(self, user):
         return user.groups.all().values_list('name')
-
