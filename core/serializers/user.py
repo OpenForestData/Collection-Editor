@@ -15,4 +15,4 @@ class MinimalUserSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_groups(self, user):
-        return user.groups.all().values_list('name')
+        return user.groups.all().values_list('name', flat=True)
