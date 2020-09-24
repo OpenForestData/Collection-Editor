@@ -3,16 +3,16 @@ image: python:3.8-slim-buster
 variables:
   DEBUG: 'False'
   SECRET_KEY: Test
-  DB_NAME: collection_editor
+  DB_NAME: collection-editor
   DB_HOST: postgres
   DB_ENGINE: postgres
-  DB_DATABASE: collection_editor
-  DB_USER: ce_user
-  DB_PASSWORD: ce_password
-  MONGO_HOST: ce_mongo
-  MONGO_DATABASE: collection_editor
-  MONGO_USER: ce_user
-  MONGO_PASSWORD: ce_password
+  DB_DATABASE: collection-editor
+  DB_USER: ce-user
+  DB_PASSWORD: ce-password
+  MONGO_HOST: ce-mongo
+  MONGO_DATABASE: collection-editor
+  MONGO_USER: ce-user
+  MONGO_PASSWORD: ce-password
   MONGO_PORT: 27017
 
 before_script:
@@ -98,13 +98,13 @@ Sphinx documentation:
 Test:
   stage: tests
   variables:
-    POSTGRES_USER: ce_user
-    POSTGRES_PASSWORD: ce_password
-    POSTGRES_DB: collection_editor
+    POSTGRES_USER: ce-user
+    POSTGRES_PASSWORD: ce-password
+    POSTGRES_DB: collection-editor
     POSTGRES_HOST_AUTH_METHOD: trust
-    MONGO_INITDB_DATABASE: collection_editor
-    MONGO_INITDB_ROOT_USERNAME: ce_user
-    MONGO_INITDB_ROOT_PASSWORD: ce_password
+    MONGO_INITDB_DATABASE: collection-editor
+    MONGO_INITDB_ROOT_USERNAME: ce-user
+    MONGO_INITDB_ROOT_PASSWORD: ce-password
     TESTING: 'True'
   services:
     - name: postgres:12-alpine
