@@ -110,7 +110,7 @@ Test:
     - name: postgres:12-alpine
       alias: postgres
     - name: mongo:4.2
-      alias: ce_mongo
+      alias: ce-mongo
   script:
     - pip install -r testing_requirements.txt
     - cp example.env .env
